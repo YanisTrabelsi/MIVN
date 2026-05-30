@@ -65,16 +65,21 @@ return {
 			{ "<leader>gb", "<cmd>Telescope git_branches<cr>", desc = "Git branches" },
 
 			-- Divers
-			{ "<leader>q", "<cmd>q<cr>", desc = "Quit" },
-			{ "<leader>Q", "<cmd>qa!<cr>", desc = "Quit all" },
-			{ "<leader>e", "<cmd>Ex<cr>", desc = "Explorer" },
-			{ "<leader>h", "<cmd>nohl<cr>", desc = "Clear highlights" },
+			{ "<leader>q", "<cmd>qa!<cr>", desc = "Quit all" },
+			{ "<leader>=", "<cmd>normal mzgg=G`z<cr>", desc = "Format file"},
 
 			-- Navigation
 			{ "<leader>wj", "<C-w>j", desc = "Move down" },
 			{ "<leader>wk", "<C-w>k", desc = "Move up" },
 			{ "<leader>wl", "<C-w>l", desc = "Move right" },
 			{ "<leader>wh", "<C-w>h", desc = "Move left" },
+
+			-- Session
+			{"<leader>s", group = "session"},
+			{"<leader>ss", "<cmd>AutoSession save<cr>", desc = "Save session"},
+			{"<leader>sr", "<cmd>AutoSession restore<cr>", desc = "Restore session"},
+			{"<leader>se", "<cmd>AutoSession enable<cr>", desc = "Enable auto-session"},
+			{"<leader>sd", "<cmd>AutoSession disable<cr>", desc = "Disable auto-session"}
 		})
 	end,
 }
