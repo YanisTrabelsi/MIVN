@@ -79,7 +79,8 @@ return {
 			{"<leader>ss", "<cmd>AutoSession save<cr>", desc = "Save session"},
 			{"<leader>sr", "<cmd>AutoSession restore<cr>", desc = "Restore session"},
 			{"<leader>se", "<cmd>AutoSession enable<cr>", desc = "Enable auto-session"},
-			{"<leader>sd", "<cmd>AutoSession disable<cr>", desc = "Disable auto-session"}
+			{"<leader>sd", "<cmd>AutoSession disable<cr>", desc = "Disable auto-session"},
+			{"<leader>sD", "<cmd>AutoSession delete<cr>", desc = "Delete session"},
 		})
 	end,
 }
