@@ -32,6 +32,7 @@ vim.opt.tabstop = 4 -- un tab = 4 espaces visuellement
 vim.opt.shiftwidth = 4 -- indentation avec = aussi sur 4
 vim.opt.cursorline = true
 vim.api.nvim_set_hl(0, "CursorLine", { underline = true, sp = "#A6F7B2" })
+vim.opt.laststatus = 3
 
 vim.keymap.set("n", "<Space>", "<Nop>", { silent = true })
 vim.keymap.del("i", "<leader>t")
