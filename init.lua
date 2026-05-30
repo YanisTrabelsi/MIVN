@@ -30,6 +30,12 @@ vim.o.statuscolumn = "%!v:lua.require('statuscolumn').render()"
 vim.o.statusline = "%!v:lua.require('statusline').render()"
 vim.opt.tabstop = 4 -- un tab = 4 espaces visuellement
 vim.opt.shiftwidth = 4 -- indentation avec = aussi sur 4
+vim.opt.cursorline = true
+vim.api.nvim_set_hl(0, "CursorLine", { underline = true, sp = "#A6F7B2" })
 
 vim.keymap.set("n", "<Space>", "<Nop>", { silent = true })
 vim.keymap.del("i", "<leader>t")
+
+--color palette
+--#CBA6F7 (primary)
+--#A6F7B2 (secondary)

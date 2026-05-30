@@ -23,7 +23,7 @@ return {
 			vim.api.nvim_set_hl(0, "WhichKeyBorder", { fg = "#CBA6F7" })
 			vim.api.nvim_set_hl(0, "WhichKeyTitle", { fg = "#CBA6F7", bold = true })
 			vim.api.nvim_set_hl(0, "WhichKeyNormal", { bg = "NONE" })
-			vim.api.nvim_set_hl(0, "WhichKey", { fg = "#CBA6F7", bold = true })
+			vim.api.nvim_set_hl(0, "WhichKey", { fg = "#A6F7B2", bold = true })
 			vim.api.nvim_set_hl(0, "WhichKeyDesc", { fg = "#CDD6F4" })
 			vim.api.nvim_set_hl(0, "WhichKeyGroup", { fg = "#FAB387", bold = true })
 			vim.api.nvim_set_hl(0, "WhichKeySeparator", { fg = "#6C7086" })
