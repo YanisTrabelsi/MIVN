@@ -30,10 +30,14 @@ A minimal, aesthetic Neovim configuration built around a dark purple/green color
 - **nvim-lspconfig** + **mason.nvim** — LSP management
 - **nvim-cmp** — Autocompletion with LuaSnip snippets
 
+### Session
+- **auto-session** — Automatic session save/restore
+
 ## Keybinds
 
 Leader key: `<Space>`
 
+### Find
 | Keybind       | Action               |
 |---------------|----------------------|
 | `<leader>ff`  | Find files           |
@@ -41,21 +45,47 @@ Leader key: `<Space>`
 | `<leader>fb`  | Buffers              |
 | `<leader>fr`  | Recent files         |
 | `<leader>fh`  | Help tags            |
+
+### Buffer
+| Keybind       | Action               |
+|---------------|----------------------|
 | `<leader>bd`  | Delete buffer        |
 | `<leader>bn`  | Next buffer          |
 | `<leader>bp`  | Previous buffer      |
+
+### Window
+| Keybind       | Action               |
+|---------------|----------------------|
 | `<leader>wv`  | Split vertical       |
 | `<leader>ws`  | Split horizontal     |
 | `<leader>wq`  | Close window         |
 | `<leader>ww`  | Save                 |
+| `<leader>wj`  | Move down            |
+| `<leader>wk`  | Move up              |
+| `<leader>wl`  | Move right           |
+| `<leader>wh`  | Move left            |
+
+### Git
+| Keybind       | Action               |
+|---------------|----------------------|
 | `<leader>gs`  | Git status           |
 | `<leader>gc`  | Git commits          |
 | `<leader>gb`  | Git branches         |
-| `<leader>e`   | File explorer        |
-| `<leader>h`   | Clear highlights     |
-| `<leader>q`   | Quit                 |
-| `<leader>Q`   | Quit all             |
+
+### Session
+| Keybind       | Action               |
+|---------------|----------------------|
+| `<leader>ss`  | Save session         |
+| `<leader>sr`  | Restore session      |
+| `<leader>se`  | Enable auto-session  |
+| `<leader>sd`  | Disable auto-session |
+
+### Misc
+| Keybind       | Action               |
+|---------------|----------------------|
 | `<leader>t`   | Toggle terminal      |
+| `<leader>q`   | Quit all             |
+| `<leader>=`   | Format file          |
 | `<C-\>`       | Dismiss notifications|
 
 ## Structure
@@ -76,7 +106,8 @@ Leader key: `<Space>`
     │   ├── treesitter.lua
     │   ├── whichkey.lua
     │   ├── lsp.lua
-    │   └── autopairs.lua
+    │   ├── autopairs.lua
+    │   └── auto-session.lua
     ├── statuscolumn.lua
     └── statusline.lua
 ```
