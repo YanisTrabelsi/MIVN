@@ -39,13 +39,14 @@ A minimal, aesthetic Neovim configuration built around a dark purple/green color
 Leader key: `<Space>`
 
 ### Find
-| Keybind      | Action       |
-|--------------|--------------|
-| `<leader>ff` | Find files   |
-| `<leader>fg` | Live grep    |
-| `<leader>fb` | Buffers      |
-| `<leader>fr` | Recent files |
-| `<leader>fh` | Help tags    |
+| Keybind            | Action       |
+|--------------------|--------------|
+| `<leader><leader>` | Find files   |
+| `<leader>ff`       | Find files   |
+| `<leader>fg`       | Live grep    |
+| `<leader>fb`       | Buffers      |
+| `<leader>fr`       | Recent files |
+| `<leader>fh`       | Help tags    |
 
 ### Buffer
 | Keybind      | Action          |
@@ -81,14 +82,15 @@ Leader key: `<Space>`
 | `<leader>se` | Enable auto-session  |
 | `<leader>sd` | Disable auto-session |
 | `<leader>sD` | Delete session       |
+| `<leader>st` | Toggle auto-session  |
 
 ### Misc
-| Keybind      | Action                    |
-|--------------|---------------------------|
-| `<leader>t`  | Toggle floating terminal  |
-| `<leader>q`  | Quit all                  |
-| `<leader>=`  | Format file               |
-| `<C-\>`      | Dismiss notifications     |
+| Keybind      | Action                   |
+|--------------|--------------------------|
+| `<leader>t`  | Toggle floating terminal |
+| `<leader>q`  | Quit all                 |
+| `<leader>=`  | Format file              |
+| `<C-\>`      | Dismiss notifications    |
 
 ## Structure
 
