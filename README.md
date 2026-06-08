@@ -18,6 +18,7 @@ A minimal, aesthetic Neovim configuration built around a dark purple/green color
 - **noice.nvim** — Floating cmdline (bottom-centered) and notifications
 - **nvim-notify** — Persistent notifications (dismiss with `<C-\>`)
 - **which-key.nvim** — Keybind popup on leader
+- **hlchunk.nvim** — Indent guides and chunk highlighting
 
 ### Navigation
 - **telescope.nvim** — Fuzzy finder (files, grep, buffers, git)
@@ -26,6 +27,7 @@ A minimal, aesthetic Neovim configuration built around a dark purple/green color
 - **nvim-treesitter** — Syntax highlighting and indentation
 - **nvim-autopairs** — Auto close brackets and quotes
 - **toggleterm.nvim** — Floating terminal (`<leader>t`)
+- **undotree** — Visual undo history (`<leader>u`)
 
 ### LSP
 - **nvim-lspconfig** + **mason.nvim** — LSP management (clangd enabled by default)
@@ -88,6 +90,7 @@ Leader key: `<Space>`
 | Keybind      | Action                   |
 |--------------|--------------------------|
 | `<leader>t`  | Toggle floating terminal |
+| `<leader>u`  | Toggle undotree          |
 | `<leader>q`  | Quit all                 |
 | `<leader>=`  | Format file              |
 | `<C-\>`      | Dismiss notifications    |
@@ -99,6 +102,7 @@ Leader key: `<Space>`
 ├── init.lua
 └── lua/
     ├── autocmd/
+    │   ├── autosave.lua
     │   ├── cursor.lua
     │   └── colorScheme.lua
     ├── plugins/
@@ -112,7 +116,9 @@ Leader key: `<Space>`
     │   ├── whichkey.lua
     │   ├── lsp.lua
     │   ├── autopairs.lua
-    │   └── auto-session.lua
+    │   ├── auto-session.lua
+    │   ├── hlchunk.lua
+    │   └── undotree.lua
     ├── statuscolumn.lua
     └── statusline.lua
 ```

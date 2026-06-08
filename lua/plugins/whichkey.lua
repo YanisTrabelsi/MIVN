@@ -40,7 +40,7 @@ return {
 		wk.add({
 			-- Fichiers
 			{ "<leader>f", group = "find" },
-			{"<leader><leader>", "<cmd>Telescope find_files<cr>", desc = "Find files"},
+			{ "<leader><leader>", "<cmd>Telescope find_files<cr>", desc = "Find files" },
 			{ "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files" },
 			{ "<leader>fg", "<cmd>Telescope live_grep<cr>", desc = "Live grep" },
 			{ "<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Buffers" },
@@ -68,7 +68,8 @@ return {
 
 			-- Divers
 			{ "<leader>q", "<cmd>qa!<cr>", desc = "Quit all" },
-			{ "<leader>=", "<cmd>normal mzgg=G`z<cr>", desc = "Format file"},
+			{ "<leader>=", "<cmd>normal mzgg=G`z<cr>", desc = "Format file" },
+			{ "<leader>u", desc="Undotree"},
 
 			-- Navigation
 			{ "<leader>wj", "<C-w>j", desc = "Move down" },
@@ -77,13 +78,13 @@ return {
 			{ "<leader>wh", "<C-w>h", desc = "Move left" },
 
 			-- Session
-			{"<leader>s", group = "session"},
-			{"<leader>ss", "<cmd>AutoSession save<cr>", desc = "Save session"},
-			{"<leader>sr", "<cmd>AutoSession restore<cr>", desc = "Restore session"},
-			{"<leader>se", "<cmd>AutoSession enable<cr>", desc = "Enable auto-session"},
-			{"<leader>sd", "<cmd>AutoSession disable<cr>", desc = "Disable auto-session"},
-			{"<leader>sD", "<cmd>AutoSession delete<cr>", desc = "Delete session"},
-			{"<leader>st", "<cmd>AutoSession toggle<cr>", desc = "Toggle auto-session"},
+			{ "<leader>s", group = "session" },
+			{ "<leader>ss", "<cmd>AutoSession save<cr>", desc = "Save session" },
+			{ "<leader>sr", "<cmd>AutoSession restore<cr>", desc = "Restore session" },
+			{ "<leader>se", "<cmd>AutoSession enable<cr>", desc = "Enable auto-session" },
+			{ "<leader>sd", "<cmd>AutoSession disable<cr>", desc = "Disable auto-session" },
+			{ "<leader>sD", "<cmd>AutoSession delete<cr>", desc = "Delete session" },
+			{ "<leader>st", "<cmd>AutoSession toggle<cr>", desc = "Toggle auto-session" },
 		})
 	end,
 }

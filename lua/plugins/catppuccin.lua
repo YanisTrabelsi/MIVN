@@ -22,6 +22,8 @@ return {
 				mocha = function(colors)
 					return {
 						Comment = { fg = colors.lavender, style = { "italic" } },
+						IblIndent = { fg = "#313244" },
+						IblScope  = { fg = "#CBA6F7" },
 					}
 				end,
 			},
