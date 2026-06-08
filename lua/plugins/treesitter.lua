@@ -23,7 +23,6 @@ return {
 				"go",
 				"java",
 				"kotlin",
-				"swift",
 				"bash",
 				"fish",
 				"markdown",

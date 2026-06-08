@@ -37,7 +37,6 @@ vim.opt.laststatus = 3
 vim.keymap.set("n", "<Space>", "<Nop>", { silent = true })
 vim.keymap.del("i", "<leader>t")
 vim.opt.guicursor = "n-v-c:block,i:ver25,r:hor20"
-vim.opt.runtimepath:append("/home/ytrabels/.local/share/mivn/site")
 --color palette
 --#CBA6F7 (primary)
 --#A6F7B2 (secondary)
