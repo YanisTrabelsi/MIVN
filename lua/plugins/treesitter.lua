@@ -1,7 +1,6 @@
 return {
 	"nvim-treesitter/nvim-treesitter",
-	--UNCOMMENT THIS IF YOU ARE ON 42 A COMPUTER !
-	--version = "v0.9.3",
+	version = vim.fn.has("nvim-0.12") == 1 and "v0.9.2" or "v0.9.3",
 	lazy = false,
 	build = ":TSUpdate",
 	config = function()
