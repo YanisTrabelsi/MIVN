@@ -37,6 +37,6 @@ vim.opt.laststatus = 3
 vim.keymap.set("n", "<Space>", "<Nop>", { silent = true })
 vim.keymap.del("i", "<leader>t")
 vim.opt.guicursor = "n-v-c:block,i:ver25,r:hor20"
---color palette
+vim.opt.runtimepath:append(vim.fn.stdpath("data") .. "/site")
 --#CBA6F7 (primary)
 --#A6F7B2 (secondary)
