@@ -1,9 +1,25 @@
 return {
 	"nvim-treesitter/nvim-treesitter",
-	version = vim.fn.has("nvim-0.12") == 1 and "v0.9.2" or "v0.9.3",
+	commit = "f197a15",
 	lazy = false,
-	build = ":TSUpdate",
+	dev = true,
+	dir = vim.fn.stdpath("data") .. "/lazy/nvim-treesitter",
+	build = function()
+		vim.cmd("TSUpdate")
+		local patch = vim.fn.stdpath("config") .. "/lua/patches/query_predicates.lua"
+		local target = vim.fn.stdpath("data") .. "/lazy/nvim-treesitter/lua/nvim-treesitter/query_predicates.lua"
+		if vim.loop.fs_stat(patch) then
+			vim.loop.fs_copyfile(patch, target)
+		end
+	end,
 	config = function()
+		-- Réappliquer le patch au démarrage (au cas où)
+		local patch = vim.fn.stdpath("config") .. "/lua/patches/query_predicates.lua"
+		local target = vim.fn.stdpath("data") .. "/lazy/nvim-treesitter/lua/nvim-treesitter/query_predicates.lua"
+		if vim.loop.fs_stat(patch) then
+			vim.loop.fs_copyfile(patch, target)
+		end
+
 		require("nvim-treesitter.configs").setup({
 			ensure_installed = {
 				"lua",
