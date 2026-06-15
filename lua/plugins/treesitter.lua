@@ -1,26 +1,10 @@
 return {
 	"nvim-treesitter/nvim-treesitter",
-	commit = "f197a15",
 	lazy = false,
-	dev = true,
-	dir = vim.fn.stdpath("data") .. "/lazy/nvim-treesitter",
-	build = function()
-		vim.cmd("TSUpdate")
-		local patch = vim.fn.stdpath("config") .. "/lua/patches/query_predicates.lua"
-		local target = vim.fn.stdpath("data") .. "/lazy/nvim-treesitter/lua/nvim-treesitter/query_predicates.lua"
-		if vim.loop.fs_stat(patch) then
-			vim.loop.fs_copyfile(patch, target)
-		end
-	end,
+	build = ":TSUpdate",
 	config = function()
-		-- Réappliquer le patch au démarrage (au cas où)
-		local patch = vim.fn.stdpath("config") .. "/lua/patches/query_predicates.lua"
-		local target = vim.fn.stdpath("data") .. "/lazy/nvim-treesitter/lua/nvim-treesitter/query_predicates.lua"
-		if vim.loop.fs_stat(patch) then
-			vim.loop.fs_copyfile(patch, target)
-		end
-
-		require("nvim-treesitter.configs").setup({
+		require("nvim-treesitter.config").setup({
+			install_dir = vim.fn.stdpath("data") .. "/lazy/nvim-treesitter",
 			ensure_installed = {
 				"lua",
 				"vim",
@@ -50,6 +34,7 @@ return {
 				"regex",
 				"comment",
 			},
+			sync_install = false,
 			highlight = { enable = true },
 			indent = { enable = true },
 		})

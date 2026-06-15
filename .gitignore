@@ -1,0 +1,10 @@
+# Lazy.nvim
+lazy-lock.json
+
+# Cache et données générées
+*.log
+*.bak
+
+# OS
+.DS_Store
+Thumbs.db

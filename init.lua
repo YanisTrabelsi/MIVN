@@ -22,6 +22,14 @@ end
 -- Initialisation
 require("lazy").setup("plugins") -- loads every files in ./lua/plugins
 
+vim.api.nvim_create_autocmd("FileType", {
+	callback = function()
+		local ok, _ = pcall(vim.treesitter.start)
+		if not ok then
+		end
+	end,
+})
+
 vim.opt.cmdheight = 0
 vim.opt.showmode = false
 vim.opt.number = true
@@ -37,6 +45,5 @@ vim.opt.laststatus = 3
 vim.keymap.set("n", "<Space>", "<Nop>", { silent = true })
 vim.keymap.del("i", "<leader>t")
 vim.opt.guicursor = "n-v-c:block,i:ver25,r:hor20"
-vim.opt.runtimepath:append(vim.fn.stdpath("data") .. "/site")
 --#CBA6F7 (primary)
 --#A6F7B2 (secondary)
