@@ -9,7 +9,7 @@ return {
 		config = function()
 			require("mason").setup()
 			require("mason-lspconfig").setup({
-				ensure_installed = { "clangd", "pyright" },
+				ensure_installed = { "pyright" },
 			})
 
 			-- Donne à tous les serveurs LSP les capacités étendues de nvim-cmp
