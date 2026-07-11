@@ -145,4 +145,25 @@ curl -fsSL https://raw.githubusercontent.com/YanisTrabelsi/MIVN/main/install.sh 
 nvim
 ```
 
+### Option 3 — Windows (PowerShell)
+
+`install.sh` is a bash script and won't run in `cmd`/PowerShell directly. Two options:
+
+**a) WSL / Git Bash** — behaves like Linux/macOS, use Option 1 or 2 above (config goes to `~/.config/nvim`).
+
+**b) Native Windows** — use the PowerShell script instead (config goes to `%LOCALAPPDATA%\nvim`):
+
+```powershell
+irm https://raw.githubusercontent.com/YanisTrabelsi/MIVN/main/install.ps1 | iex
+nvim
+```
+
+> If PowerShell blocks the script, run once: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+
+## Requirements (Windows)
+
+Same as above, plus:
+- A terminal that renders true color and Nerd Font glyphs correctly (Windows Terminal recommended)
+- ripgrep via `winget install BurntSushi.ripgrep.MSVC` or `scoop install ripgrep`
+
 Lazy.nvim will automatically install all plugins on first launch.
