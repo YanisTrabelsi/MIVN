@@ -14,7 +14,6 @@ A minimal, aesthetic Neovim configuration built around a dark purple/green color
 ### UI
 - **catppuccin** — Colorscheme (mocha, transparent background)
 - **dashboard-nvim** — Start screen with ASCII header
-- **bufferline.nvim** — Tab bar with per-tab buffer isolation
 - **noice.nvim** — Floating cmdline (bottom-centered) and notifications
 - **nvim-notify** — Persistent notifications (dismiss with `<C-\>`)
 - **which-key.nvim** — Keybind popup on leader
@@ -103,12 +102,10 @@ Leader key: `<Space>`
 └── lua/
     ├── autocmd/
     │   ├── autosave.lua
-    │   ├── cursor.lua
-    │   └── colorScheme.lua
+    │   └── cursor.lua
     ├── plugins/
     │   ├── catppuccin.lua
     │   ├── dashboard.lua
-    │   ├── bufferline.lua
     │   ├── noice.lua
     │   ├── telescope.lua
     │   ├── toggleterm.lua
@@ -132,8 +129,19 @@ Leader key: `<Space>`
 
 ## Installation
 
+### Option 1 — git clone (recommended)
+
 ```bash
 git clone git@github.com:YanisTrabelsi/MIVN.git ~/.config/nvim
+nvim
+```
+
+### Option 2 — curl
+
+If you don't have SSH keys set up, run the install script — it downloads the latest snapshot and backs up any existing config automatically:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/YanisTrabelsi/MIVN/main/install.sh | bash
 nvim
 ```
 

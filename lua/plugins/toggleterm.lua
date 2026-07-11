@@ -5,6 +5,7 @@ return {
 		require("toggleterm").setup({
 			open_mapping = [[<leader>t]],
 			direction = "float",
+			shade_terminals = true,
 			float_opts = {
 				border = "rounded",
 				winblend = 0,

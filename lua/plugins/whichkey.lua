@@ -1,4 +1,4 @@
-return {
+return{
 	"folke/which-key.nvim",
 	event = "VeryLazy",
 	config = function()
@@ -55,8 +55,8 @@ return {
 
 			-- Fenêtres
 			{ "<leader>w", group = "window" },
-			{ "<leader>wv", "<cmd>vsplit<cr>", desc = "Split vertical" },
-			{ "<leader>ws", "<cmd>split<cr>", desc = "Split horizontal" },
+			{ "<leader>wv", "<cmd>vsplit<cr><C-w>l", desc = "Split vertical" },
+			{ "<leader>ws", "<cmd>split<cr><C-w>j", desc = "Split horizontal" },
 			{ "<leader>wq", "<cmd>q<cr>", desc = "Close window" },
 			{ "<leader>ww", "<cmd>w<cr>", desc = "Save" },
 

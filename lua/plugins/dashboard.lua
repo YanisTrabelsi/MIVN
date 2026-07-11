@@ -82,7 +82,11 @@ return {
 				},
 				footer = {
 					"",
-					"  ⚡  " .. require("lazy").stats().count .. " plugins loaded  ",
+						"     "
+						.. require("lazy").stats().loaded
+						.. "/"
+						.. require("lazy").stats().count
+						.. " plugins loaded  ",
 				},
 			},
 		})
