@@ -8,13 +8,19 @@ return {
 		},
 		config = function()
 			require("mason").setup()
+
+			local uname = vim.loop.os_uname()
+			local is_linux_aarch64 = uname.sysname == "Linux" and uname.machine == "aarch64"
+
+			local ensure_installed = { "pyright" }
+			if not is_linux_aarch64 then
+				table.insert(ensure_installed, "clangd")
+			end
+
 			require("mason-lspconfig").setup({
-				ensure_installed = { "pyright" },
+				ensure_installed = ensure_installed,
 			})
 
-			-- Donne à tous les serveurs LSP les capacités étendues de nvim-cmp
-			-- (snippets, documentation enrichie, etc.). Sans ça, la complétion
-			-- fonctionne mais reste plus pauvre.
 			vim.lsp.config("*", {
 				capabilities = require("cmp_nvim_lsp").default_capabilities(),
 			})
@@ -39,9 +45,6 @@ return {
 			vim.api.nvim_set_hl(0, "CmpBorder", { fg = "#CBA6F7" })
 			vim.api.nvim_set_hl(0, "CmpDocBorder", { fg = "#CBA6F7" })
 
-			-- Charge les snippets tout faits (def, class, ifmain, etc.).
-			-- Sans cet appel, LuaSnip n'a aucun snippet et la source "luasnip"
-			-- de cmp renvoie toujours une liste vide.
 			require("luasnip.loaders.from_vscode").lazy_load()
 
 			local cmp = require("cmp")
@@ -74,8 +77,6 @@ return {
 				},
 			})
 
-			-- Complétion en ligne de commande (:) et recherche (/).
-			-- Sorti de cmp.setup({...}) où il était imbriqué par erreur.
 			cmp.setup.cmdline(":", {
 				mapping = cmp.mapping.preset.cmdline(),
 				sources = {

@@ -126,6 +126,7 @@ Leader key: `<Space>`
 - [lazy.nvim](https://github.com/folke/lazy.nvim) (auto-bootstrapped)
 - A [Nerd Font](https://www.nerdfonts.com/) for icons
 - [ripgrep](https://github.com/BurntSushi/ripgrep) for Telescope live grep
+- **clangd**: auto-installed by Mason on most platforms (macOS Intel/ARM, Linux x86_64, Windows). On **Linux aarch64** (e.g. Fedora ARM), Mason has no precompiled binary for this architecture — the config detects this automatically and skips it, but you'll need to install it yourself via your package manager (e.g. `sudo dnf install clang-tools-extra` on Fedora) before opening a C/C++ file. Everything else installs and works normally.
 
 ## Installation
 
