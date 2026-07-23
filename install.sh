@@ -16,7 +16,7 @@ curl -fsSL "https://github.com/${REPO}/archive/refs/heads/${BRANCH}.tar.gz" -o "
 echo "==> Extracting..."
 tar -xzf "${TMP_DIR}/mivn.tar.gz" -C "${TMP_DIR}"
 
-if [[ -d "${TARGET}" -a -d "${TARGET}/install.sh" -ne 0 -a -d "${TARGET}/install.ps1" -ne 0 ]]; then
+if [ -d "${TARGET}" -a -d "${TARGET}/install.sh" -ne 0 -a -d "${TARGET}/install.ps1" -ne 0 ]; then
 	BACKUP="${TARGET}.bak.$(date +%Y%m%d%H%M%S)"
 	echo "==> Existing config found, backing it up to ${BACKUP}"
 	mv "${TARGET}" "${BACKUP}"
