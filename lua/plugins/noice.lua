@@ -8,7 +8,7 @@ return {
 	config = function()
 		require("notify").setup({
 			background_colour = "#000000",
-			timeout = 99999999,
+			timeout = 2000,
 		})
 
 		vim.keymap.set("n", "<C-\\>", function()

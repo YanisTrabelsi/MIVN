@@ -1,4 +1,4 @@
-return{
+return {
 	"folke/which-key.nvim",
 	event = "VeryLazy",
 	config = function()
@@ -59,6 +59,11 @@ return{
 			{ "<leader>ws", "<cmd>split<cr><C-w>j", desc = "Split horizontal" },
 			{ "<leader>wq", "<cmd>q<cr>", desc = "Close window" },
 			{ "<leader>ww", "<cmd>w<cr>", desc = "Save" },
+			{ "<leader>we", "<C-w>=", desc = "Equalize windows" },
+			{ "<leader>w+", "<cmd>resize +5<cr>", desc = "Increase height" },
+			{ "<leader>w-", "<cmd>resize -5<cr>", desc = "Decrease height" },
+			{ "<leader>w>", "<cmd>vertical resize +5<cr>", desc = "Increase width" },
+			{ "<leader>w<", "<cmd>vertical resize -5<cr>", desc = "Decrease width" },
 
 			-- Git
 			{ "<leader>g", group = "git" },
@@ -69,13 +74,43 @@ return{
 			-- Divers
 			{ "<leader>q", "<cmd>qa!<cr>", desc = "Quit all" },
 			{ "<leader>=", "<cmd>normal mzgg=G`z<cr>", desc = "Format file" },
-			{ "<leader>u", desc="Undotree"},
+			{ "<leader>u", desc = "Undotree" },
+
+			-- Open
+			{ "<leader>o", group = "open" },
+			{ "<leader>ot", desc = "Terminal" },
+			{ "<leader>oe", "<cmd>Oil<cr>", desc = "File explorer (Oil)" },
+			{
+				"<leader>of",
+				function()
+					require("oil").toggle_float()
+				end,
+				desc = "File explorer flottant (Oil)",
+			},
+			{ "<leader>ol", "<cmd>Lazy<cr>", desc = "Lazy" },
+			{
+				"<leader>oc",
+				function()
+					vim.cmd("edit " .. vim.fn.stdpath("config"))
+				end,
+				desc = "Config Neovim",
+			},
 
 			-- Navigation
 			{ "<leader>wj", "<C-w>j", desc = "Move down" },
 			{ "<leader>wk", "<C-w>k", desc = "Move up" },
 			{ "<leader>wl", "<C-w>l", desc = "Move right" },
 			{ "<leader>wh", "<C-w>h", desc = "Move left" },
+
+			-- Tabs
+			{ "<leader>t", group = "tab" },
+			{ "<leader>to", "<cmd>tabnew<cr>", desc = "New tab" },
+			{ "<leader>tc", "<cmd>tabclose<cr>", desc = "Close tab" },
+			{ "<leader>tn", "<cmd>tabnext<cr>", desc = "Next tab" },
+			{ "<leader>tp", "<cmd>tabprevious<cr>", desc = "Prev tab" },
+			{ "<leader>tf", "<cmd>tabfirst<cr>", desc = "First tab" },
+			{ "<leader>tl", "<cmd>tablast<cr>", desc = "Last tab" },
+			{ "<leader>tm", "<cmd>tabmove<cr>", desc = "Move tab" },
 
 			-- Session
 			{ "<leader>s", group = "session" },

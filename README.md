@@ -21,11 +21,12 @@ A minimal, aesthetic Neovim configuration built around a dark purple/green color
 
 ### Navigation
 - **telescope.nvim** — Fuzzy finder (files, grep, buffers, git)
+- **oil.nvim** — File explorer as an editable buffer (replaces netrw), with a floating window mode
 
 ### Editor
 - **nvim-treesitter** — Syntax highlighting and indentation
 - **nvim-autopairs** — Auto close brackets and quotes
-- **toggleterm.nvim** — Floating terminal (`<leader>t`)
+- **toggleterm.nvim** — Floating terminal (`<leader>ot`)
 - **undotree** — Visual undo history (`<leader>u`)
 
 ### LSP
@@ -57,16 +58,21 @@ Leader key: `<Space>`
 | `<leader>bp` | Previous buffer |
 
 ### Window
-| Keybind      | Action           |
-|--------------|------------------|
-| `<leader>wv` | Split vertical   |
-| `<leader>ws` | Split horizontal |
-| `<leader>wq` | Close window     |
-| `<leader>ww` | Save             |
-| `<leader>wh` | Move left        |
-| `<leader>wj` | Move down        |
-| `<leader>wk` | Move up          |
-| `<leader>wl` | Move right       |
+| Keybind      | Action             |
+|--------------|--------------------|
+| `<leader>wv` | Split vertical     |
+| `<leader>ws` | Split horizontal   |
+| `<leader>wq` | Close window       |
+| `<leader>ww` | Save               |
+| `<leader>we` | Equalize windows   |
+| `<leader>w+` | Increase height    |
+| `<leader>w-` | Decrease height    |
+| `<leader>w>` | Increase width     |
+| `<leader>w<` | Decrease width     |
+| `<leader>wh` | Move left          |
+| `<leader>wj` | Move down          |
+| `<leader>wk` | Move up            |
+| `<leader>wl` | Move right         |
 
 ### Git
 | Keybind      | Action       |
@@ -74,6 +80,26 @@ Leader key: `<Space>`
 | `<leader>gs` | Git status   |
 | `<leader>gc` | Git commits  |
 | `<leader>gb` | Git branches |
+
+### Open
+| Keybind      | Action                        |
+|--------------|--------------------------------|
+| `<leader>ot` | Toggle floating terminal       |
+| `<leader>oe` | File explorer (Oil)            |
+| `<leader>of` | File explorer, floating (Oil)  |
+| `<leader>ol` | Lazy                           |
+| `<leader>oc` | Edit Neovim config              |
+
+### Tab
+| Keybind      | Action        |
+|--------------|---------------|
+| `<leader>to` | New tab       |
+| `<leader>tc` | Close tab     |
+| `<leader>tn` | Next tab      |
+| `<leader>tp` | Previous tab  |
+| `<leader>tf` | First tab     |
+| `<leader>tl` | Last tab      |
+| `<leader>tm` | Move tab      |
 
 ### Session
 | Keybind      | Action               |
@@ -86,13 +112,12 @@ Leader key: `<Space>`
 | `<leader>st` | Toggle auto-session  |
 
 ### Misc
-| Keybind      | Action                   |
-|--------------|--------------------------|
-| `<leader>t`  | Toggle floating terminal |
-| `<leader>u`  | Toggle undotree          |
-| `<leader>q`  | Quit all                 |
-| `<leader>=`  | Format file              |
-| `<C-\>`      | Dismiss notifications    |
+| Keybind      | Action                |
+|--------------|------------------------|
+| `<leader>u`  | Toggle undotree        |
+| `<leader>q`  | Quit all               |
+| `<leader>=`  | Format file            |
+| `<C-\>`      | Dismiss notifications  |
 
 ## Structure
 
@@ -107,6 +132,7 @@ Leader key: `<Space>`
     │   ├── catppuccin.lua
     │   ├── dashboard.lua
     │   ├── noice.lua
+    │   ├── oil.lua
     │   ├── telescope.lua
     │   ├── toggleterm.lua
     │   ├── treesitter.lua
