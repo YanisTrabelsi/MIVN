@@ -12,7 +12,7 @@ return {
 			local uname = vim.loop.os_uname()
 			local is_linux_aarch64 = uname.sysname == "Linux" and uname.machine == "aarch64"
 
-			local ensure_installed = { "pyright" }
+			local ensure_installed = { "pyright", "bashls", "lua_ls" }
 			if not is_linux_aarch64 then
 				table.insert(ensure_installed, "clangd")
 			end
@@ -30,6 +30,20 @@ return {
 
 			vim.lsp.config("pyright", {})
 			vim.lsp.enable("pyright")
+
+			vim.lsp.config("bashls", {})
+			vim.lsp.enable("bashls")
+
+			vim.lsp.config("lua_ls", {
+				settings = {
+					Lua = {
+						diagnostics = {
+							globals = { "vim" },
+						},
+					},
+				},
+			})
+			vim.lsp.enable("lua_ls")
 		end,
 	},
 	{
