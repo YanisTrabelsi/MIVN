@@ -156,7 +156,7 @@ Leader key: `<Space>`
 
 ## Installation
 
-### Option 1 — git clone (recommended)
+### Option 1 — git clone
 
 ```bash
 git clone git@github.com:YanisTrabelsi/MIVN.git ~/.config/nvim
