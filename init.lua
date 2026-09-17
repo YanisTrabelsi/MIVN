@@ -22,6 +22,15 @@ end
 -- Initialisation
 require("lazy").setup("plugins") -- loads every files in ./lua/plugins
 
+vim.diagnostic.config({
+	virtual_text = {
+		spacing = 2,
+	},
+	signs = true,
+	underline = true,
+	update_in_insert = false,
+})
+
 vim.opt.cmdheight = 0
 vim.opt.showmode = false
 vim.opt.number = true

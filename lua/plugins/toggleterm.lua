@@ -12,7 +12,7 @@ return {
 			shell = vim.o.shell,
 			float_opts = {
 				border = "rounded",
-				winblend = 0,
+				winblend = 32,
 			},
 			on_open = function(term)
 				vim.api.nvim_set_option_value(

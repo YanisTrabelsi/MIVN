@@ -64,6 +64,14 @@ return {
 			{ "<leader>w-", "<cmd>resize -5<cr>", desc = "Decrease height" },
 			{ "<leader>w>", "<cmd>vertical resize +5<cr>", desc = "Increase width" },
 			{ "<leader>w<", "<cmd>vertical resize -5<cr>", desc = "Decrease width" },
+			{ "<leader>wj", "<C-w>j", desc = "Go down" },
+			{ "<leader>wk", "<C-w>k", desc = "Go up" },
+			{ "<leader>wl", "<C-w>l", desc = "Go right" },
+			{ "<leader>wh", "<C-w>h", desc = "Go left" },
+			{ "<leader>wH", "<C-w><S-h>", desc = "Move left" },
+			{ "<leader>wJ", "<C-w><S-j>", desc = "Move down" },
+			{ "<leader>wK", "<C-w><S-k>", desc = "Move up" },
+			{ "<leader>wL", "<C-w><S-l>", desc = "Move right" },
 
 			-- Git
 			{ "<leader>g", group = "git" },
@@ -95,12 +103,6 @@ return {
 				end,
 				desc = "Config Neovim",
 			},
-
-			-- Navigation
-			{ "<leader>wj", "<C-w>j", desc = "Move down" },
-			{ "<leader>wk", "<C-w>k", desc = "Move up" },
-			{ "<leader>wl", "<C-w>l", desc = "Move right" },
-			{ "<leader>wh", "<C-w>h", desc = "Move left" },
 
 			-- Tabs
 			{ "<leader>t", group = "tab" },
