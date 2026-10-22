@@ -3,11 +3,14 @@ return {
 	branch = "main",
 	build = ":TSUpdate",
 	lazy = false,
+
 	config = function()
 		local ts = require("nvim-treesitter")
+
 		ts.setup({
 			install_dir = vim.fn.stdpath("data") .. "/site",
 		})
+
 		ts.install({
 			"lua",
 			"vim",
@@ -20,6 +23,7 @@ return {
 			"css",
 			"json",
 			"markdown",
+			"asm",
 		})
 
 		vim.api.nvim_create_autocmd("FileType", {
@@ -35,6 +39,7 @@ return {
 				"css",
 				"json",
 				"markdown",
+				"asm",
 			},
 			callback = function()
 				pcall(vim.treesitter.start)
