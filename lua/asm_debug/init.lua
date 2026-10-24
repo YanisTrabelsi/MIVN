@@ -382,7 +382,7 @@ local function send_input_and_continue()
 	end
 end
 
-local function open_terminal(command, opts)
+local function open_terminal(command, opts, prefer_split)
 	opts = opts or {}
 	local buf = vim.api.nvim_create_buf(false, true)
 	vim.bo[buf].bufhidden = "hide"
@@ -410,13 +410,23 @@ local function open_terminal(command, opts)
 		if ok then set_terminal_window(win) end
 		return ok, win
 	end
-	local ok, win = pcall(vim.api.nvim_open_win, buf, true, terminal_window_config())
+	local ok, win
 	local window_error
-	if ok then
-		set_terminal_window(win)
-	else
-		window_error = tostring(win)
+	if prefer_split then
 		ok, win = open_split()
+		if not ok then
+			window_error = tostring(win)
+			ok, win = pcall(vim.api.nvim_open_win, buf, true, terminal_window_config())
+			if ok then set_terminal_window(win) end
+		end
+	else
+		ok, win = pcall(vim.api.nvim_open_win, buf, true, terminal_window_config())
+		if ok then
+			set_terminal_window(win)
+		else
+			window_error = tostring(win)
+			ok, win = open_split()
+		end
 	end
 	if not ok then
 		pcall(vim.api.nvim_buf_delete, buf, { force = true })
@@ -1754,7 +1764,7 @@ local function gdb_start()
 	end
 	local shell = vim.fn.exepath("sh")
 	if shell == "" then shell = "/bin/sh" end
-	local terminal_buf, _, _, terminal_error = open_terminal({ shell, "-c", "while :; do sleep 3600; done" })
+	local terminal_buf, _, _, terminal_error = open_terminal({ shell, "-c", "while :; do sleep 3600; done" }, nil, true)
 	if not terminal_buf then
 		notify("Could not open the program input terminal: " .. tostring(terminal_error), vim.log.levels.ERROR)
 		return

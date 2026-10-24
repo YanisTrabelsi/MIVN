@@ -14,8 +14,7 @@ A minimal, aesthetic Neovim configuration built around a dark purple/green color
 ### UI
 - **catppuccin** — Colorscheme (mocha, transparent background)
 - **dashboard-nvim** — Start screen with ASCII header
-- **noice.nvim** — Floating cmdline (bottom-centered) and notifications
-- **nvim-notify** — Persistent notifications (dismiss with `<C-\>`)
+- **noice.nvim** — Floating cmdline and popup menu; notifications use Neovim's built-in message display
 - **which-key.nvim** — Keybind popup on leader
 - **hlchunk.nvim** — Indent guides and chunk highlighting
 - **render-markdown.nvim** — Render Markdown in Neovim buffers
@@ -141,7 +140,6 @@ Leader key: `<Space>`
 | `I` (ASM debugger) | Open the program input prompt manually |
 | `K` (ASM)    | Show instruction documentation |
 | `<C-k>` (ASM, insert mode) | Show operand signature help |
-| `<C-\>`      | Dismiss notifications  |
 
 The ASM debugger keeps its program terminal hidden until it detects a read from stdin. When the input window appears, type a line and press `<Enter>`; the window closes and execution resumes. Program output from the hidden terminal is copied into the **PROGRAM OUTPUT** panel. Press `I` in a debugger panel to open the input terminal manually.
 

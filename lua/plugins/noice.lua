@@ -3,19 +3,12 @@ return {
 	event = "VeryLazy",
 	dependencies = {
 		"MunifTanjim/nui.nvim",
-		"rcarriga/nvim-notify",
 	},
 	config = function()
-		require("notify").setup({
-			background_colour = "#000000",
-			timeout = 2000,
-		})
-
-		vim.keymap.set("n", "<C-\\>", function()
-			require("notify").dismiss({ silent = true, pending = true })
-		end)
-
 		require("noice").setup({
+			notify = {
+				enabled = false,
+			},
 			cmdline = {
 				enabled = true,
 				view = "cmdline_popup",
