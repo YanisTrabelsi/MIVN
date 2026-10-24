@@ -31,6 +31,7 @@ A minimal, aesthetic Neovim configuration built around a dark purple/green color
 - **undotree** — Visual undo history (`<leader>u`)
 - **conform.nvim** — Format Python with Ruff on save
 - **nvim-lint** — Lint Python with Flake8
+- **Auto-save** — Debounced saves after Normal mode edits and when leaving Insert mode
 
 ### LSP
 - **nvim-lspconfig** + **mason.nvim** — LSP management; Mason installs Pyright, Bash Language Server, Lua Language Server, and Clangd on supported platforms

@@ -21,13 +21,16 @@ local function schedule_save(buf)
 		if not vim.api.nvim_buf_is_valid(buf) or not vim.bo[buf].modified then
 			return
 		end
+		if vim.api.nvim_get_mode().mode:sub(1, 1) ~= "n" then
+			return
+		end
 		vim.api.nvim_buf_call(buf, function()
 			vim.cmd("silent! update")
 		end)
 	end))
 end
 
-vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
+vim.api.nvim_create_autocmd({ "TextChanged", "InsertLeave" }, {
 	group = group,
 	callback = function(event)
 		schedule_save(event.buf)

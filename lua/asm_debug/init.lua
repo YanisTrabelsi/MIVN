@@ -324,13 +324,15 @@ local function dap_respond(request, success, body, message)
 end
 
 local function terminal_window_config()
-	local width = math.max(20, math.min(vim.o.columns - 4, 110))
-	local height = math.max(5, math.min(12, math.floor(vim.o.lines * 0.30)))
+	local available_width = math.max(1, vim.o.columns - 4)
+	local available_height = math.max(1, vim.o.lines - vim.o.cmdheight - 4)
+	local width = math.max(1, math.min(available_width, 110))
+	local height = math.max(1, math.min(available_height, 12, math.floor(vim.o.lines * 0.30)))
 	return {
 		relative = "editor",
 		width = width,
 		height = height,
-		row = math.max(0, vim.o.lines - height - 3),
+		row = math.max(0, math.min(vim.o.lines - height - vim.o.cmdheight - 2, vim.o.lines - height - 3)),
 		col = math.max(0, math.floor((vim.o.columns - width) / 2)),
 		style = "minimal",
 		border = "rounded",
@@ -385,25 +387,74 @@ local function open_terminal(command, opts)
 	local buf = vim.api.nvim_create_buf(false, true)
 	vim.bo[buf].bufhidden = "hide"
 	S.terminal_buf = buf
-	local win
-	local ok
-	ok, win = pcall(vim.api.nvim_open_win, buf, true, terminal_window_config())
+	local function set_terminal_window(win)
+		S.terminal_win = win
+		vim.wo[win].number = false
+		vim.wo[win].relativenumber = false
+		vim.wo[win].wrap = false
+		vim.wo[win].signcolumn = "no"
+	end
+	local function open_split()
+		for _, candidate in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+			if vim.api.nvim_win_get_config(candidate).relative == "" then
+				vim.api.nvim_set_current_win(candidate)
+				break
+			end
+		end
+		local ok, win = pcall(function()
+			vim.cmd("botright 8split")
+			local split = vim.api.nvim_get_current_win()
+			vim.api.nvim_win_set_buf(split, buf)
+			return split
+		end)
+		if ok then set_terminal_window(win) end
+		return ok, win
+	end
+	local ok, win = pcall(vim.api.nvim_open_win, buf, true, terminal_window_config())
+	local window_error
+	if ok then
+		set_terminal_window(win)
+	else
+		window_error = tostring(win)
+		ok, win = open_split()
+	end
 	if not ok then
 		pcall(vim.api.nvim_buf_delete, buf, { force = true })
-		S.terminal_buf = nil
-		return nil, nil, nil
+		S.terminal_buf, S.terminal_win = nil, nil
+		return nil, nil, nil, "could not create terminal window: " .. tostring(window_error or win)
 	end
-	S.terminal_win = win
-	vim.wo[win].number = false
-	vim.wo[win].relativenumber = false
-	vim.wo[win].wrap = false
-	vim.wo[win].signcolumn = "no"
-	local ok, job = pcall(vim.fn.termopen, command, opts)
-	if not ok then job = 0 end
-	if job <= 0 then
-		pcall(vim.api.nvim_win_close, win, true)
+	local function start_job()
+		local started, job_id = pcall(vim.api.nvim_buf_call, buf, function()
+			return vim.fn.termopen(command, opts)
+		end)
+		if started and type(job_id) == "number" and job_id > 0 then
+			return job_id
+		end
+		return nil, started and ("termopen returned " .. tostring(job_id)) or tostring(job_id)
+	end
+	local job, terminal_error = start_job()
+	if not job and S.terminal_win and vim.api.nvim_win_is_valid(S.terminal_win) then
+		pcall(vim.api.nvim_win_close, S.terminal_win, true)
+		S.terminal_win = nil
 		pcall(vim.api.nvim_buf_delete, buf, { force = true })
-		return nil, nil, nil
+		buf = vim.api.nvim_create_buf(false, true)
+		vim.bo[buf].bufhidden = "hide"
+		S.terminal_buf = buf
+		local split_ok, split_win = open_split()
+		if split_ok then
+			win = split_win
+			job, terminal_error = start_job()
+		else
+			terminal_error = terminal_error .. "; split fallback failed: " .. tostring(split_win)
+		end
+	end
+	if not job or job <= 0 then
+		if S.terminal_win and vim.api.nvim_win_is_valid(S.terminal_win) then
+			pcall(vim.api.nvim_win_close, S.terminal_win, true)
+		end
+		pcall(vim.api.nvim_buf_delete, buf, { force = true })
+		S.terminal_buf, S.terminal_win, S.terminal_job = nil, nil, nil
+		return nil, nil, nil, tostring(terminal_error or "could not start terminal job")
 	end
 	S.terminal_buf, S.terminal_win, S.terminal_job = buf, win, job
 	vim.keymap.set("t", "<CR>", send_input_and_continue, { buffer = buf, silent = true, desc = "Send program input and continue" })
@@ -435,14 +486,15 @@ local function handle_run_in_terminal(request)
 			env[key] = value
 		end
 	end
-	local _, _, job = open_terminal(args.args, {
+	local _, _, job, terminal_error = open_terminal(args.args, {
 		cwd = args.cwd,
 		env = next(env) and env or nil,
 	})
 	if not job then
-		status("Could not open program input/output terminal")
-		notify("Could not open the program input/output terminal.", vim.log.levels.ERROR)
-		dap_respond(request, false, nil, "Could not open the program input terminal.")
+		local message = "Could not open the program input/output terminal: " .. tostring(terminal_error)
+		status(message)
+		notify(message, vim.log.levels.ERROR)
+		dap_respond(request, false, nil, message)
 		return
 	end
 	append_output("Program I/O terminal is hidden until the debugger detects a stdin read.")
@@ -1702,9 +1754,9 @@ local function gdb_start()
 	end
 	local shell = vim.fn.exepath("sh")
 	if shell == "" then shell = "/bin/sh" end
-	local terminal_buf = open_terminal({ shell, "-c", "while :; do sleep 3600; done" })
+	local terminal_buf, _, _, terminal_error = open_terminal({ shell, "-c", "while :; do sleep 3600; done" })
 	if not terminal_buf then
-		notify("Could not open the program input terminal.", vim.log.levels.ERROR)
+		notify("Could not open the program input terminal: " .. tostring(terminal_error), vim.log.levels.ERROR)
 		return
 	end
 	local inferior_tty = vim.fn.term_gettty(terminal_buf, 1)
