@@ -4,5 +4,3 @@ vim.api.nvim_create_autocmd("VimEnter", {
         io.flush()
     end,
 })
-
-vim.opt.guicursor = "n-v-c:block-Cursor,i:ver25-Cursor,r:hor20-Cursor"

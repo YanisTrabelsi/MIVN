@@ -10,7 +10,7 @@ return {
 			term_colors = true,
 			flavour = "mocha", -- latte, frappe, macchiato, mocha
 
-			-- Modifier les couleurs globales
+			-- Override global colors.
 			color_overrides = {
 				mocha = {
 					text = "#FFFFFF",
@@ -18,7 +18,7 @@ return {
 				},
 			},
 
-			-- Modifier des highlight groups spécifiques
+			-- Override specific highlight groups.
 			highlight_overrides = {
 				mocha = function(colors)
 					return {

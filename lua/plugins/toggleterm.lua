@@ -23,7 +23,7 @@ return {
 			end,
 		})
 
-		-- Palette ANSI du terminal (Catppuccin Mocha)
+		-- Terminal ANSI palette (Catppuccin Mocha).
 		vim.g.terminal_color_0 = "#45475A"
 		vim.g.terminal_color_1 = "#F38BA8"
 		vim.g.terminal_color_2 = "#A6E3A1"

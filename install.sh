@@ -4,8 +4,14 @@ REPO="YanisTrabelsi/MIVN"
 BRANCH="main"
 TARGET="${HOME}/.config/nvim"
 TMP_DIR="$(mktemp -d)"
+BACKUP=""
 
 cleanup() {
+	local exit_code=$?
+	if [ "${exit_code}" -ne 0 ] && [ -n "${BACKUP}" ] && [ ! -e "${TARGET}" ] && [ -e "${BACKUP}" ]; then
+		echo "==> Installation failed; restoring ${BACKUP}"
+		mv "${BACKUP}" "${TARGET}"
+	fi
 	rm -rf "${TMP_DIR}"
 }
 trap cleanup EXIT
@@ -16,14 +22,13 @@ curl -fsSL "https://github.com/${REPO}/archive/refs/heads/${BRANCH}.tar.gz" -o "
 echo "==> Extracting..."
 tar -xzf "${TMP_DIR}/mivn.tar.gz" -C "${TMP_DIR}"
 
-if [ -d "${TARGET}" ] && [ ! -f "${TARGET}/install.sh" ] && [ ! -f "${TARGET}/install.ps1" ]; then
+if [ -e "${TARGET}" ] || [ -L "${TARGET}" ]; then
 	BACKUP="${TARGET}.bak.$(date +%Y%m%d%H%M%S)"
+	if [ -e "${BACKUP}" ]; then
+		BACKUP="${BACKUP}.$$"
+	fi
 	echo "==> Existing config found, backing it up to ${BACKUP}"
 	mv "${TARGET}" "${BACKUP}"
-elif [ -d "${TARGET}" ]; then
-	echo "==> Deleting old version"
-	rm -rf "${TARGET}"
-	echo "==> Old version deleted"
 fi
 
 mkdir -p "$(dirname "${TARGET}")"

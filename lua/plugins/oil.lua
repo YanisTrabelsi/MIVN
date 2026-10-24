@@ -1,11 +1,11 @@
 return {
 	"stevearc/oil.nvim",
 	dependencies = { "nvim-tree/nvim-web-devicons" },
-	-- charge dès le démarrage pour pouvoir ouvrir nvim directement sur un dossier
+	-- Load at startup so Neovim can open directly into a directory.
 	lazy = false,
 	config = function()
 		require("oil").setup({
-			-- Oil remplace netrw comme explorateur par défaut
+			-- Use Oil instead of netrw as the default file explorer.
 			default_file_explorer = true,
 
 			view_options = {
@@ -28,8 +28,8 @@ return {
 				winblend = 0,
 			},
 
-			-- Fenêtre flottante (utilisée par <leader>of), même style que
-			-- toggleterm / noice : bordure arrondie, fond transparent
+			-- Floating window (used by <leader>of), styled like toggleterm and
+			-- noice with a rounded border and transparent background.
 			float = {
 				padding = 2,
 				max_width = 90,
@@ -62,7 +62,7 @@ return {
 			},
 		})
 
-		-- Palette Catppuccin Mocha, alignée sur le reste de la config
+		-- Catppuccin Mocha palette, matching the rest of the configuration.
 		local function set_oil_highlights()
 			vim.api.nvim_set_hl(0, "OilFloatBorder", { fg = "#CBA6F7", bold = true })
 			vim.api.nvim_set_hl(0, "OilFloatTitle", { fg = "#CBA6F7", bold = true })

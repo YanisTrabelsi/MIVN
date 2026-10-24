@@ -15,8 +15,8 @@ return {
 			"",
 		}
 
-		-- Hauteur totale du contenu (header + center + footer)
-		-- center : 5 items * 2 lignes chacun = 10, + separateurs ~ 13
+		-- Total content height (header + center + footer).
+		-- Center: 5 items × 2 lines each = 10, plus about 3 separator lines.
 		local content_height = #header + 13 + 3
 		local padding = math.floor((vim.o.lines - content_height) / 2)
 		padding = math.max(0, padding)

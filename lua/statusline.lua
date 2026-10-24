@@ -28,8 +28,13 @@ local function set_highlights()
 	vim.api.nvim_set_hl(0, "StatusLine",    { fg = "#CDD6F4", bg = "" })
 end
 
+set_highlights()
+vim.api.nvim_create_autocmd("ColorScheme", {
+	group = vim.api.nvim_create_augroup("MivnStatuslineHighlights", { clear = true }),
+	callback = set_highlights,
+})
+
 M.render = function()
-	set_highlights()
 
 	local mode       = vim.fn.mode()
 	local mode_label = modes[mode] or "?"
@@ -41,14 +46,17 @@ M.render = function()
 
 	local line     = vim.fn.line(".")
 	local col      = vim.fn.col(".")
-	local line_str = string.format("%" .. "d", line)
-	local col_str  = string.format("%-" .. "d", col)
+	local line_str = tostring(line)
+	local col_str  = tostring(col)
 
 	local mode_part  = " " .. mode_label .. " "
-	local file_part  = " " .. file_name .. modified .. " "
+	local file_part  = " " .. file_name:gsub("%%", "%%%%") .. modified .. " "
 	local right_part = " " .. line_str .. ":" .. col_str .. " "
 
-	local filler = vim.o.columns - #mode_part - #file_part - #right_part
+	local filler = vim.o.columns
+		- vim.fn.strdisplaywidth(mode_part)
+		- vim.fn.strdisplaywidth(" " .. file_name .. modified .. " ")
+		- vim.fn.strdisplaywidth(right_part)
 
 	return mode_hl .. mode_part
 		.. "%#StatusLine#" .. file_part

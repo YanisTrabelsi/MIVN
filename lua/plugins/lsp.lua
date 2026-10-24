@@ -44,6 +44,19 @@ return {
 				},
 			})
 			vim.lsp.enable("lua_ls")
+
+			local asm_lsp = vim.fn.exepath("asm-lsp")
+			if asm_lsp ~= "" then
+				vim.lsp.config("asm_lsp", {
+					cmd = { asm_lsp },
+					root_dir = function(bufnr, on_dir)
+						local filename = vim.api.nvim_buf_get_name(bufnr)
+						local root = vim.fs.root(filename, { ".asm-lsp.toml", ".git" })
+						on_dir(root or vim.fs.dirname(filename))
+					end,
+				})
+				vim.lsp.enable("asm_lsp")
+			end
 		end,
 	},
 	{
@@ -60,6 +73,12 @@ return {
 			vim.api.nvim_set_hl(0, "CmpDocBorder", { fg = "#CBA6F7" })
 
 			require("luasnip.loaders.from_vscode").lazy_load()
+
+			local luasnip = require("luasnip")
+			luasnip.config.setup({ history = true, update_events = "TextChanged,TextChangedI" })
+			luasnip.add_snippets("asm", require("snippets.asm"))
+			luasnip.add_snippets("python", require("snippets.python"))
+			luasnip.add_snippets("c", require("snippets.c"))
 
 			local cmp = require("cmp")
 
@@ -80,8 +99,24 @@ return {
 					},
 				},
 				mapping = cmp.mapping.preset.insert({
-					["<Tab>"] = cmp.mapping.select_next_item(),
-					["<S-Tab>"] = cmp.mapping.select_prev_item(),
+					["<Tab>"] = cmp.mapping(function(fallback)
+						if luasnip.expand_or_jumpable() then
+							luasnip.expand_or_jump()
+						elseif cmp.visible() then
+							cmp.select_next_item()
+						else
+							fallback()
+						end
+					end, { "i", "s" }),
+					["<S-Tab>"] = cmp.mapping(function(fallback)
+						if luasnip.jumpable(-1) then
+							luasnip.jump(-1)
+						elseif cmp.visible() then
+							cmp.select_prev_item()
+						else
+							fallback()
+						end
+					end, { "i", "s" }),
 					["<CR>"] = cmp.mapping.confirm({ select = true }),
 					["<C-Space>"] = cmp.mapping.complete(),
 				}),

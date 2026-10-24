@@ -38,7 +38,7 @@ return {
 			callback = set_wk_highlights,
 		})
 		wk.add({
-			-- Fichiers
+			-- Files
 			{ "<leader>f", group = "find" },
 			{ "<leader><leader>", "<cmd>Telescope find_files<cr>", desc = "Find files" },
 			{ "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files" },
@@ -53,7 +53,7 @@ return {
 			{ "<leader>bn", "<cmd>bnext<cr>", desc = "Next buffer" },
 			{ "<leader>bp", "<cmd>bprev<cr>", desc = "Prev buffer" },
 
-			-- Fenêtres
+			-- Windows
 			{ "<leader>w", group = "window" },
 			{ "<leader>wv", "<cmd>vsplit<cr><C-w>l", desc = "Split vertical" },
 			{ "<leader>ws", "<cmd>split<cr><C-w>j", desc = "Split horizontal" },
@@ -79,10 +79,26 @@ return {
 			{ "<leader>gc", "<cmd>Telescope git_commits<cr>", desc = "Git commits" },
 			{ "<leader>gb", "<cmd>Telescope git_branches<cr>", desc = "Git branches" },
 
-			-- Divers
-			{ "<leader>q", "<cmd>qa!<cr>", desc = "Quit all" },
+			-- Miscellaneous
+			{ "<leader>q", "<cmd>qa<cr>", desc = "Quit all" },
 			{ "<leader>=", "<cmd>normal mzgg=G`z<cr>", desc = "Format file" },
 			{ "<leader>u", desc = "Undotree" },
+
+			-- Snippets: expand directly from WhichKey without typing the trigger.
+			{ "<leader>n", group = "snippets" },
+			{ "<leader>na", group = "assembly" },
+			{ "<leader>nam", function() require("snippets").expand("asm", "main") end, desc = "Main" },
+			{ "<leader>naf", function() require("snippets").expand("asm", "func") end, desc = "Function" },
+			{ "<leader>nar", function() require("snippets").expand("asm", "rodata") end, desc = "Read-only data" },
+			{ "<leader>np", group = "python" },
+			{ "<leader>npm", function() require("snippets").expand("python", "main") end, desc = "Main" },
+			{ "<leader>npd", function() require("snippets").expand("python", "def") end, desc = "Function" },
+			{ "<leader>npc", function() require("snippets").expand("python", "class") end, desc = "Class" },
+			{ "<leader>npf", function() require("snippets").expand("python", "for") end, desc = "For loop" },
+			{ "<leader>nc", group = "C" },
+			{ "<leader>ncm", function() require("snippets").expand("c", "main") end, desc = "Main" },
+			{ "<leader>ncf", function() require("snippets").expand("c", "func") end, desc = "Function" },
+			{ "<leader>ncl", function() require("snippets").expand("c", "for") end, desc = "For loop" },
 
 			-- Open
 			{ "<leader>o", group = "open" },
@@ -93,13 +109,13 @@ return {
 				function()
 					require("oil").toggle_float()
 				end,
-				desc = "File explorer flottant (Oil)",
+				desc = "Floating file explorer (Oil)",
 			},
 			{ "<leader>ol", "<cmd>Lazy<cr>", desc = "Lazy" },
 			{
 				"<leader>oc",
 				function()
-					vim.cmd("edit " .. vim.fn.stdpath("config"))
+					vim.cmd("edit " .. vim.fn.fnameescape(vim.fn.stdpath("config")))
 				end,
 				desc = "Config Neovim",
 			},

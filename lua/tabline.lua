@@ -20,6 +20,7 @@ local function tabline()
         else
             name = vim.fn.fnamemodify(name, ":t")
         end
+        name = name:gsub("%%", "%%%%")
 
         if i == current then
             table.insert(result, "%#MIVNTabCorner#")

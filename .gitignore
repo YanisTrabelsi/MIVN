@@ -1,7 +1,7 @@
 # Lazy.nvim
 lazy-lock.json
 
-# Cache et données générées
+# Cache and generated data
 *.log
 *.bak
 

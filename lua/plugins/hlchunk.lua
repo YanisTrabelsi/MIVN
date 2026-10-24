@@ -6,8 +6,8 @@ return {
 			chunk = {
 				enable = true,
 				style = {
-					{ fg = "#CBA6F7" }, -- chunk actif
-					{ fg = "#F38BA8" }, -- erreur
+					{ fg = "#CBA6F7" }, -- Active chunk.
+					{ fg = "#F38BA8" }, -- Error.
 				},
 				chars = {
 					horizontal_line = "─",
@@ -38,7 +38,7 @@ return {
 			},
 		})
 
-		-- Exclure certains filetypes
+		-- Exclude selected filetypes.
 		vim.api.nvim_create_autocmd("FileType", {
 			pattern = {
 				"dashboard",
