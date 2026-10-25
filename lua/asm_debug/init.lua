@@ -543,7 +543,8 @@ local function is_at_main_return()
 	for _, instruction in ipairs(S.instructions or {}) do
 		if number_from_value(instruction.address) == pc then
 			local mnemonic = (instruction.inst or ""):match("^%s*([%w%.]+)")
-			is_return = mnemonic == "ret" or mnemonic == "retab"
+			-- Disassemblers use suffixes such as retq/retl for x86 returns.
+			is_return = mnemonic and mnemonic:match("^ret[%w]*$") ~= nil
 			break
 		end
 	end
@@ -1919,29 +1920,39 @@ end
 -- macOS's LLDB does not always interpret DAP stepIn/next as a machine
 -- instruction step. Using explicit LLDB commands ensures BL/B does not also
 -- consume the instruction at the target address.
-local function step_dap_instruction(lldb_command, description)
+local function step_dap_instruction(lldb_commands, description)
 	if not S.job or S.step_request_pending or S.running then return end
 	S.step_request_pending = true
 	S.running = true
 	status(description or "Machine step — waiting to stop…")
-	dap_send("evaluate", {
-		expression = "`" .. lldb_command,
-		frameId = S.frame_id,
-		context = "repl",
-	}, function(response)
-		if not response.success then
+	if type(lldb_commands) == "string" then lldb_commands = { lldb_commands } end
+	local function attempt(index)
+		local command = lldb_commands[index]
+		if not command then
 			S.step_request_pending = false
 			S.running = false
-			status("Machine step failed — check the LLDB command")
+			status("LLDB machine step failed — no compatible instruction-step command was accepted")
 			return
 		end
-		local result = response.body and response.body.result or ""
-		if type(result) == "string" and result:lower():match("^%s*error:") then
-			S.step_request_pending = false
-			S.running = false
-			status("LLDB error: " .. result:gsub("%s+$", ""))
-		end
-	end)
+		dap_send("evaluate", {
+			expression = "`" .. command,
+			frameId = S.frame_id,
+			context = "repl",
+		}, function(response)
+			local result = response.body and response.body.result or ""
+			local command_error = not response.success or (type(result) == "string" and result:lower():find("error:", 1, true) ~= nil)
+			if command_error then
+				if lldb_commands[index + 1] then
+					attempt(index + 1)
+				else
+					S.step_request_pending = false
+					S.running = false
+					status("LLDB machine step failed: " .. tostring(result ~= "" and result or response.message))
+				end
+			end
+		end)
+	end
+	attempt(1)
 end
 
 local function step_mi(command)
@@ -2043,7 +2054,9 @@ local function bind_keys(buf)
 			return
 		end
 		if S.backend and S.backend:match("LLDB%-DAP") then
-			step_dap_instruction("thread step-inst-over", "F7 — step one machine instruction without entering calls…")
+			-- LLDB changed this command's word order across releases. Try both
+			-- spellings so F7 remains available with Apple and upstream LLDB.
+			step_dap_instruction({ "thread step-inst-over", "thread step-over-inst" }, "F7 — step one machine instruction without entering calls…")
 		else
 			-- nexti executes one instruction; for a call, it waits for the return.
 			step_mi("-exec-next-instruction")
