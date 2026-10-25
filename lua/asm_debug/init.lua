@@ -257,6 +257,13 @@ local function focus_debugger_panel(name)
 	local win = S.windows[name or "assembly"]
 	if win and vim.api.nvim_win_is_valid(win) then
 		vim.api.nvim_set_current_win(win)
+		local mode = vim.api.nvim_get_mode().mode:sub(1, 1)
+		if mode == "t" then
+			local normal_mode = vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true)
+			vim.api.nvim_input(normal_mode)
+		elseif mode == "i" then
+			vim.api.nvim_input(vim.api.nvim_replace_termcodes("<Esc>", true, false, true))
+		end
 	end
 end
 
