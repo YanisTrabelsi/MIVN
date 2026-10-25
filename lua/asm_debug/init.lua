@@ -268,13 +268,13 @@ local function mi_unescape(text)
 	return text:gsub("\\n", "\n"):gsub("\\r", "\r"):gsub("\\t", "\t"):gsub('\\"', '"'):gsub("\\\\", "\\")
 end
 
-local function mi_send(command, callback)
+local function mi_send(command, callback, quiet_error)
 	if not S.job then
 		return
 	end
 	S.mi_token = S.mi_token + 1
 	local token = tostring(S.mi_token)
-	S.mi_pending[token] = callback or function() end
+	S.mi_pending[token] = { callback = callback or function() end, quiet_error = quiet_error == true }
 	local ok, result = pcall(vim.fn.chansend, S.job, token .. command .. "\n")
 	if not ok or result == 0 then
 		S.mi_pending[token] = nil
@@ -948,6 +948,13 @@ end
 
 local function memory_ranges(sp, fp)
 	if not sp then return {} end
+	-- At process entry (and in functions compiled without frame pointers), RBP/X29
+	-- may contain zero or an unrelated value. A real downward-growing stack frame
+	-- pointer is aligned and above SP; skip implausible values instead of probing
+	-- unmapped memory.
+	if fp and (fp < sp or fp - sp > 64 * 1024 * 1024 or fp % 8 ~= 0) then
+		fp = nil
+	end
 	local sp_start = math.max(0, math.floor((sp - 64) / 8) * 8)
 	local sp_count = 128
 	if not fp or (fp >= sp_start and fp < sp_start + sp_count) then
@@ -977,34 +984,33 @@ local function render_stack_regions(regions)
 			lines[#lines + 1] = ""
 			lines[#lines + 1] = string.format("── %s: 0x%016X ──", region.label or "MEMORY REGION", region.address)
 		end
+		local bytes = region.bytes or {}
 		if region.error then
-			lines[#lines + 1] = "Cannot read memory in this region."
-		else
-			local bytes = region.bytes or {}
-			for offset = 0, (region.count or #bytes) - 1, 8 do
-				local hex, ascii = {}, {}
-				for j = 0, 7 do
-					local byte = bytes[offset + j + 1]
-					hex[#hex + 1] = byte ~= nil and string.format("%02X", byte) or "??"
-					ascii[#ascii + 1] = byte == nil and "?" or ((byte >= 32 and byte <= 126) and string.char(byte) or ".")
-				end
-				local address = region.address + offset
-				local is_sp = sp and sp >= address and sp < address + 8
-				local is_fp = fp and fp >= address and fp < address + 8
-				local marker = is_sp and is_fp and "SF" or (is_sp and "SP" or (is_fp and "FP" or "  "))
-				lines[#lines + 1] = string.format("%s 0x%016X  %s  |%s|", marker, address, table.concat(hex, " "), table.concat(ascii))
-				local item = {
-					row = #lines - 1,
-					is_sp = is_sp,
-					is_fp = is_fp,
-					address = address,
-					offset = offset,
-					bytes = bytes,
-					region_index = region_index,
-				}
-				row_info[#row_info + 1] = item
-				if is_sp then sp_row = item.row end
+			lines[#lines + 1] = "?? marks memory that GDB could not read."
+		end
+		for offset = 0, (region.count or #bytes) - 1, 8 do
+			local hex, ascii = {}, {}
+			for j = 0, 7 do
+				local byte = bytes[offset + j + 1]
+				hex[#hex + 1] = byte ~= nil and string.format("%02X", byte) or "??"
+				ascii[#ascii + 1] = byte == nil and "?" or ((byte >= 32 and byte <= 126) and string.char(byte) or ".")
 			end
+			local address = region.address + offset
+			local is_sp = sp and sp >= address and sp < address + 8
+			local is_fp = fp and fp >= address and fp < address + 8
+			local marker = is_sp and is_fp and "SF" or (is_sp and "SP" or (is_fp and "FP" or "  "))
+			lines[#lines + 1] = string.format("%s 0x%016X  %s  |%s|", marker, address, table.concat(hex, " "), table.concat(ascii))
+			local item = {
+				row = #lines - 1,
+				is_sp = is_sp,
+				is_fp = is_fp,
+				address = address,
+				offset = offset,
+				bytes = bytes,
+				region_index = region_index,
+			}
+			row_info[#row_info + 1] = item
+			if is_sp then sp_row = item.row end
 		end
 	end
 	if #regions == 0 then lines[#lines + 1] = "Stack pointer unavailable." end
@@ -1074,7 +1080,7 @@ local function refresh_mi_assembly()
 	mi_send(string.format("-data-disassemble -s 0x%x -e 0x%x -- 0", pc, pc + 160), function(response)
 		S.instructions = parse_mi_instructions(response)
 		render_assembly()
-	end)
+	end, true)
 end
 
 local function refresh_mi_stack()
@@ -1086,18 +1092,39 @@ local function refresh_mi_stack()
 	local regions = memory_ranges(sp, number_from_value(S.fp) or number_from_value(S.regs.fp) or number_from_value(S.regs.x29) or number_from_value(S.regs.rbp))
 	if #regions == 0 then return end
 	local remaining = #regions
-	for i, region in ipairs(regions) do
-		local index = i
-		mi_send(string.format("-data-read-memory-bytes 0x%x %d", region.address, region.count), function(response)
-			local contents = field(response, "contents")
-			if contents then
-				regions[index].bytes = {}
-				for byte in contents:gmatch("%x%x") do
-					regions[index].bytes[#regions[index].bytes + 1] = tonumber(byte, 16)
+	local function read_region(region, callback)
+		region.bytes = {}
+		local unreadable = false
+		local function read_chunk(address, offset, count, done)
+			mi_send(string.format("-data-read-memory-bytes 0x%x %d", address, count), function(response)
+				local contents = field(response, "contents")
+				local received = 0
+				if contents then
+					for byte in contents:gmatch("%x%x") do
+						region.bytes[offset + received + 1] = tonumber(byte, 16)
+						received = received + 1
+					end
 				end
-			else
-				regions[index].error = true
-			end
+				if received == count then
+					done()
+				elseif count > 8 then
+					local first_count = math.floor(count / 16) * 8
+					read_chunk(address, offset, first_count, function()
+						read_chunk(address + first_count, offset + first_count, count - first_count, done)
+					end)
+				else
+					unreadable = true
+					done()
+				end
+			end, true)
+		end
+		read_chunk(region.address, 0, region.count, function()
+			region.error = unreadable
+			callback()
+		end)
+	end
+	for _, region in ipairs(regions) do
+		read_region(region, function()
 			remaining = remaining - 1
 			if remaining == 0 then render_stack_regions(regions) end
 		end)
@@ -1462,11 +1489,14 @@ end
 local function mi_handle_line(line)
 	local token, result = line:match("^(%d+)%^(%w+)")
 	if token then
-		local callback = S.mi_pending[token]
+		local pending = S.mi_pending[token]
 		S.mi_pending[token] = nil
+		local callback = type(pending) == "table" and pending.callback or pending
 		if result == "error" then
 			local message = mi_unescape(field(line, "msg") or "Unknown GDB error")
-			status("GDB error: " .. message)
+			if not (type(pending) == "table" and pending.quiet_error) then
+				status("GDB error: " .. message)
+			end
 			if callback then callback(line) end
 		elseif callback then
 			callback(line)
