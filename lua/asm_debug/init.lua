@@ -140,7 +140,7 @@ local function status(text)
 	local exe = S.executable and vim.fn.fnamemodify(S.executable, ":t") or "—"
 	set_lines("status", {
 		string.format(
-		" ASM DEBUG │ %s │ %s │ %s │ F5 Continue  F6 Step In  F7 Step Over  F8 Interrupt  F9 Restart  I Input  q Close",
+		" ASM DEBUG │ %s │ %s │ %s │ F5/c Cont  F6/s Step  F7/n Next  F8/p Pause  F9/r Restart  a ASM  I Input  q Close",
 			text,
 			exe,
 			S.backend or "detecting backend"
@@ -2004,6 +2004,70 @@ local function bind_keys(buf)
 	local function map(key, callback, description)
 		vim.keymap.set("n", key, callback, { buffer = buf, silent = true, nowait = true, desc = description })
 	end
+	local function continue_program()
+		if not S.job then return end
+		if S.finished then
+			status("Program exited — press F9 or r to restart")
+			return
+		end
+		if S.backend and S.backend:match("LLDB%-DAP") then
+			if not S.started then
+				status("Waiting for LLDB-DAP launch…")
+			elseif not S.running then
+				dap_send("continue", { threadId = S.thread_id })
+			end
+		elseif not S.started then
+			mi_send('-interpreter-exec console "starti"')
+		elseif not S.running then
+			mi_send("-exec-continue")
+		end
+	end
+	local function step_instruction(step_over)
+		if S.finished then
+			status("Program exited — press F9 or r to restart")
+			return
+		end
+		if not S.job or not S.started or S.running or S.step_request_pending then return end
+		if is_at_main_return() then
+			-- Let ret and the runtime exit normally to collect the real exit code.
+			S.finishing_after_main_return = true
+			S.running = true
+			status("Main returned — waiting for exit code…")
+			if S.backend and S.backend:match("LLDB%-DAP") then
+				dap_send("continue", { threadId = S.thread_id })
+			else
+				mi_send("-exec-continue")
+			end
+			return
+		end
+		if S.backend and S.backend:match("LLDB%-DAP") then
+			if step_over then
+				-- LLDB command spelling varies between Apple and upstream releases.
+				step_dap_instruction({ "thread step-inst-over", "thread step-over-inst" }, "Step over one machine instruction…")
+			else
+				step_dap_instruction("thread step-inst", "Step one machine instruction…")
+			end
+		elseif step_over then
+			step_mi("-exec-next-instruction")
+		else
+			step_mi("-exec-step-instruction")
+		end
+	end
+	local function restart_program()
+		if S.executable then M.open(S.executable) end
+	end
+	local function interrupt_program()
+		if not S.job or not S.running then return end
+		if S.backend and S.backend:match("LLDB%-DAP") then
+			dap_send("pause", { threadId = S.thread_id })
+		else
+			mi_send("-exec-interrupt")
+		end
+	end
+	local function focus_assembly()
+		local win = S.windows.assembly
+		if win and vim.api.nvim_win_is_valid(win) then vim.api.nvim_set_current_win(win) end
+	end
 	map("q", close, "Close debugger")
 	map("I", function()
 		S.waiting_for_input = true
@@ -2018,93 +2082,18 @@ local function bind_keys(buf)
 	map("<leader>wj", function() focus_panel("j") end, "Bottom panel")
 	map("<leader>wk", function() focus_panel("k") end, "Top panel")
 	map("<leader>wl", function() focus_panel("l") end, "Right panel")
-	map("<F5>", function()
-		if not S.job then return end
-		if S.finished then
-			status("Program exited — press F9 to restart")
-			return
-		end
-		if S.backend and S.backend:match("LLDB%-DAP") then
-			if not S.started then
-				status("Waiting for LLDB-DAP launch…")
-			elseif not S.running then
-				dap_send("continue", { threadId = S.thread_id })
-			end
-		elseif not S.started then
-			mi_send('-interpreter-exec console "starti"')
-		elseif not S.running then
-			mi_send("-exec-continue")
-		end
-	end, "Start / continue")
-	map("<F6>", function()
-		if S.finished then
-			status("Program exited — press F9 to restart")
-			return
-		end
-		if not S.job or not S.started or S.running or S.step_request_pending then return end
-		if is_at_main_return() then
-			-- Let ret and the runtime exit normally so we receive the real exit
-			-- code. Intermediate runtime stops are resumed without refreshing the UI.
-			S.finishing_after_main_return = true
-			S.running = true
-			status("Main returned — waiting for exit code…")
-			if S.backend and S.backend:match("LLDB%-DAP") then
-				dap_send("continue", { threadId = S.thread_id })
-			else
-				mi_send("-exec-continue")
-			end
-			return
-		end
-		if S.backend and S.backend:match("LLDB%-DAP") then
-			step_dap_instruction("thread step-inst", "F6 — step one machine instruction, step into calls…")
-		else
-			-- -exec-step would step at source level and could skip several
-			-- assembly instructions. stepi stops at the next machine instruction,
-			-- including the target of a BL.
-			step_mi("-exec-step-instruction")
-		end
-	end, "Step one instruction and enter calls")
-	map("<F7>", function()
-		if S.finished then
-			status("Program exited — press F9 to restart")
-			return
-		end
-		if not S.job or not S.started or S.running or S.step_request_pending then return end
-		if is_at_main_return() then
-			-- Let ret and the runtime exit normally so we receive the real exit
-			-- code. Intermediate runtime stops are resumed without refreshing the UI.
-			S.finishing_after_main_return = true
-			S.running = true
-			status("Main returned — waiting for exit code…")
-			if S.backend and S.backend:match("LLDB%-DAP") then
-				dap_send("continue", { threadId = S.thread_id })
-			else
-				mi_send("-exec-continue")
-			end
-			return
-		end
-		if S.backend and S.backend:match("LLDB%-DAP") then
-			-- LLDB changed this command's word order across releases. Try both
-			-- spellings so F7 remains available with Apple and upstream LLDB.
-			step_dap_instruction({ "thread step-inst-over", "thread step-over-inst" }, "F7 — step one machine instruction without entering calls…")
-		else
-			-- nexti executes one instruction; for a call, it waits for the return.
-			step_mi("-exec-next-instruction")
-		end
-	end, "Step one instruction without entering calls")
-	map("<F9>", function()
-		if not S.executable then return end
-		local executable = S.executable
-		M.open(executable)
-	end, "Restart program from the beginning")
-	map("<F8>", function()
-		if not S.job or not S.running then return end
-		if S.backend and S.backend:match("LLDB%-DAP") then
-			dap_send("pause", { threadId = S.thread_id })
-		else
-			mi_send("-exec-interrupt")
-		end
-	end, "Interrupt program")
+	map("<F5>", continue_program, "Start / continue")
+	map("<F6>", function() step_instruction(false) end, "Step one instruction and enter calls")
+	map("<F7>", function() step_instruction(true) end, "Step one instruction without entering calls")
+	map("<F8>", interrupt_program, "Interrupt program")
+	map("<F9>", restart_program, "Restart program from the beginning")
+	-- Letter shortcuts work in the debugger even when the terminal intercepts Fn keys.
+	map("c", continue_program, "Continue")
+	map("s", function() step_instruction(false) end, "Step into one instruction")
+	map("n", function() step_instruction(true) end, "Step over one instruction")
+	map("p", interrupt_program, "Pause program")
+	map("r", restart_program, "Restart program")
+	map("a", focus_assembly, "Focus assembly panel")
 end
 
 function M.open(executable)

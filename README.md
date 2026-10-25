@@ -138,6 +138,8 @@ Leader key: `<Space>`
 | `<leader>=`  | Format file            |
 | `<leader>ad` | Pick an executable in the current directory for ASM debugging |
 | `I` (ASM debugger) | Open the program input prompt manually |
+| `c` / `s` / `n` (ASM debugger) | Continue / step into / step over one instruction |
+| `p` / `r` / `a` (ASM debugger) | Pause / restart / focus the assembly panel |
 | `K` (ASM)    | Show instruction documentation |
 | `<C-k>` (ASM, insert mode) | Show operand signature help |
 
