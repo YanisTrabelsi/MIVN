@@ -7,6 +7,7 @@ local S = {
 	pending = {},
 	mi_pending = {},
 	mi_token = 0,
+	mi_stdout_buffer = "",
 	dap_buffer = "",
 	dap_expected = nil,
 	dap_launched = false,
@@ -22,10 +23,14 @@ local S = {
 	terminal_output_text = "",
 	input_breakpoint_ids = {},
 	syscall_breakpoint_ids = {},
+	syscall_catchpoint_active = false,
 	input_breakpoint_hit = false,
 	input_syscall_breakpoint_hit = false,
 	waiting_for_input = false,
 	status_text = "Ready",
+	follow_pc = true,
+	follow_memory = true,
+	stack_regions = {},
 	executable = nil,
 	architecture = nil,
 	instructions = {},
@@ -140,7 +145,7 @@ local function status(text)
 	local exe = S.executable and vim.fn.fnamemodify(S.executable, ":t") or "—"
 	set_lines("status", {
 		string.format(
-		" ASM DEBUG │ %s │ %s │ %s │ F5/c Cont  F6/s Step  F7/n Next  F8/p Pause  F9/r Restart  a ASM  I Input  q Close",
+		" ASM DEBUG │ %s │ %s │ %s │ F5/c Cont  F6/s Step  F7/n Next  F8/p Pause  F9/r Restart  a ASM  v SRC  R REG  m MEM  j/k Scroll  f CodeFollow  F MemFollow  I Input  q Close",
 			text,
 			exe,
 			S.backend or "detecting backend"
@@ -587,6 +592,11 @@ local function mark_program_finished(reason)
 end
 
 local function render_assembly()
+	local win = S.windows.assembly
+	local saved_view
+	if not S.follow_pc and win and vim.api.nvim_win_is_valid(win) then
+		saved_view = vim.api.nvim_win_call(win, vim.fn.winsaveview)
+	end
 	local lines = { "ADDRESS          INSTRUCTION", string.rep("─", 42) }
 	local current_line
 	local ins_lines = {}
@@ -656,10 +666,13 @@ local function render_assembly()
 			vim.api.nvim_buf_add_highlight(buf, ns, "AsmDebugOperandSymbol", row, item.base_col + start - 1, item.base_col + finish - 1)
 		end
 	end
-	if current_line and S.windows.assembly and vim.api.nvim_win_is_valid(S.windows.assembly) then
-		local win = S.windows.assembly
+	if win and vim.api.nvim_win_is_valid(win) then
+		if S.follow_pc and current_line then
 		pcall(vim.api.nvim_win_set_cursor, win, { current_line, 0 })
 		pcall(vim.api.nvim_win_call, win, function() vim.cmd("normal! zz") end)
+		elseif saved_view then
+			pcall(vim.api.nvim_win_call, win, function() vim.fn.winrestview(saved_view) end)
+		end
 	end
 end
 
@@ -737,6 +750,11 @@ local function source_line_for_function(frame_name)
 end
 
 local function render_source()
+	local win = S.windows.source
+	local saved_view
+	if not S.follow_pc and win and vim.api.nvim_win_is_valid(win) then
+		saved_view = vim.api.nvim_win_call(win, vim.fn.winsaveview)
+	end
 	local lines = {}
 	local current_line = S.source_line
 	if not S.source_path or #S.source_lines == 0 then
@@ -771,10 +789,15 @@ local function render_source()
 	-- Source line numbers now correspond 1:1 to rows in the full source buffer (+2 header lines).
 	-- Center it on the instruction reported by the debugger; this avoids jumps caused by
 	-- rebuilding a moving window of only a subset of the source file.
-	local win = S.windows.source
 	if current_line and row and win and vim.api.nvim_win_is_valid(win) then
-		pcall(vim.api.nvim_win_set_cursor, win, { current_line + 2, 0 })
-		pcall(vim.api.nvim_win_call, win, function() vim.cmd("normal! zz") end)
+		if S.follow_pc then
+			pcall(vim.api.nvim_win_set_cursor, win, { current_line + 2, 0 })
+			pcall(vim.api.nvim_win_call, win, function() vim.cmd("normal! zz") end)
+		elseif saved_view then
+			pcall(vim.api.nvim_win_call, win, function() vim.fn.winrestview(saved_view) end)
+		end
+	elseif saved_view and win and vim.api.nvim_win_is_valid(win) then
+		pcall(vim.api.nvim_win_call, win, function() vim.fn.winrestview(saved_view) end)
 	end
 end
 
@@ -832,12 +855,37 @@ local function register_decimal(value)
 end
 
 local function register_order()
-	if S.architecture == "arm64" then
-		local order = { "pc", "sp", "fp", "lr" }
-		for i = 0, 30 do order[#order + 1] = "x" .. i end
-		return order
+	local order, seen = {}, {}
+	local function add(name)
+		name = name:lower()
+		if not seen[name] then
+			seen[name] = true
+			order[#order + 1] = name
+		end
 	end
-	return { "rip", "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15", "eflags" }
+	if S.architecture == "arm64" then
+		for _, name in ipairs({ "pc", "sp", "fp", "lr" }) do add(name) end
+		for i = 0, 30 do add("x" .. i) end
+	else
+		for _, name in ipairs({ "rip", "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15", "eflags" }) do
+			add(name)
+		end
+	end
+	-- GDB reports the complete register file, including SIMD, floating point,
+	-- segment, and architecture-specific registers. Keep the familiar GPRs first,
+	-- then append every other register in a stable order for scrollable display.
+	local extra = {}
+	local x86_aliases = { pc = true, sp = true, fp = true, lr = true }
+	for name, value in pairs(S.regs or {}) do
+		local lower_name = type(name) == "string" and name:lower() or ""
+		local synthetic_x86_alias = S.architecture ~= "arm64" and x86_aliases[lower_name]
+		if lower_name ~= "" and value ~= nil and not seen[lower_name] and not synthetic_x86_alias then
+			extra[#extra + 1] = lower_name
+		end
+	end
+	table.sort(extra)
+	for _, name in ipairs(extra) do add(name) end
+	return order
 end
 
 local function register_hex(value)
@@ -884,6 +932,12 @@ end
 
 local function render_registers()
 	local order = register_order()
+	local win = S.windows.registers
+	local saved_view
+	if win and vim.api.nvim_win_is_valid(win) then
+		local ok, view = pcall(vim.api.nvim_win_call, win, vim.fn.winsaveview)
+		if ok then saved_view = view end
+	end
 	local columns = math.max(1, S.register_columns or 1)
 	local entries = {}
 	for _, name in ipairs(order) do
@@ -895,7 +949,6 @@ local function render_registers()
 		entries[#entries + 1] = { name = name, text = text, group = register_group(name) }
 	end
 
-	local win = S.windows.registers
 	local panel_width = win and vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_width(win) or vim.o.columns - 2
 	local gap = 2
 	local col_width = math.max(1, math.floor((panel_width - gap * (columns - 1)) / columns))
@@ -929,6 +982,9 @@ local function render_registers()
 		lines[#lines + 1] = table.concat(parts, string.rep(" ", gap))
 	end
 	set_lines("registers", lines)
+	if saved_view and win and vim.api.nvim_win_is_valid(win) then
+		pcall(vim.api.nvim_win_call, win, function() vim.fn.winrestview(saved_view) end)
+	end
 
 	local buf = S.buffers.registers
 	if not buf or not vim.api.nvim_buf_is_valid(buf) then return end
@@ -986,6 +1042,13 @@ local function memory_ranges(sp, fp)
 end
 
 local function render_stack_regions(regions)
+	S.stack_regions = regions or {}
+	local win = S.windows.stack
+	local saved_view
+	if not S.follow_memory and win and vim.api.nvim_win_is_valid(win) then
+		local ok, view = pcall(vim.api.nvim_win_call, win, vim.fn.winsaveview)
+		if ok then saved_view = view end
+	end
 	local sp = current_sp()
 	local fp = number_from_value(S.fp) or number_from_value(S.regs.fp) or number_from_value(S.regs.x29) or number_from_value(S.regs.rbp)
 	local lines = {
@@ -1069,10 +1132,13 @@ local function render_stack_regions(regions)
 			end
 		end
 	end
-	local win = S.windows.stack
-	if sp_row and win and vim.api.nvim_win_is_valid(win) then
-		pcall(vim.api.nvim_win_set_cursor, win, { sp_row + 1, 0 })
-		pcall(vim.api.nvim_win_call, win, function() vim.cmd("normal! zz") end)
+	if win and vim.api.nvim_win_is_valid(win) then
+		if S.follow_memory and sp_row then
+			pcall(vim.api.nvim_win_set_cursor, win, { sp_row + 1, 0 })
+			pcall(vim.api.nvim_win_call, win, function() vim.cmd("normal! zz") end)
+		elseif saved_view then
+			pcall(vim.api.nvim_win_call, win, function() vim.fn.winrestview(saved_view) end)
+		end
 	end
 end
 
@@ -1093,9 +1159,20 @@ local function refresh_mi_assembly()
 	if not pc then
 		return
 	end
-	mi_send(string.format("-data-disassemble -s 0x%x -e 0x%x -- 0", pc, pc + 160), function(response)
+	local function render_response(response)
 		S.instructions = parse_mi_instructions(response)
 		render_assembly()
+	end
+	-- Disassemble the entire containing function so the assembly pane can scroll
+	-- through the code instead of stopping at an arbitrary 160-byte window.
+	mi_send(string.format("-data-disassemble -a 0x%x -- 0", pc), function(response)
+		if response:match("%^error") or #parse_mi_instructions(response) == 0 then
+			-- Older GDB releases and stripped binaries may not know a containing
+			-- function. Keep a bounded address window as a reliable fallback.
+			mi_send(string.format("-data-disassemble -s 0x%x -e 0x%x -- 0", pc, pc + 512), render_response, true)
+		else
+			render_response(response)
+		end
 	end, true)
 end
 
@@ -1539,14 +1616,20 @@ local function mi_handle_line(line)
 			-- the actual exit event, as LLDB-DAP does.
 			S.running = true
 			mi_send("-exec-continue")
-		elseif reason == "syscall-return" then
+		elseif reason == "syscall-return" and S.syscall_catchpoint_active then
 			-- The matching read/readv completed after the user submitted input.
 			-- Do not leave the debugger paused on the syscall's return edge.
 			S.running = true
 			mi_send("-exec-continue")
 		else
-			S.input_breakpoint_hit = reason == "syscall-entry"
-			status("Paused — " .. reason)
+			local breakpoint_id = field(line, "bkptno")
+			S.input_breakpoint_hit = (reason == "syscall-entry" and S.syscall_catchpoint_active)
+				or (reason == "breakpoint-hit" and breakpoint_id and S.input_breakpoint_ids[breakpoint_id] == true)
+			local stop_description = reason
+			if reason == "signal-received" then
+				stop_description = field(line, "signal-name") or "signal received"
+			end
+			status("Paused — " .. stop_description)
 			refresh_mi()
 		end
 	elseif line:match("^=thread%-group%-exited") then
@@ -1554,6 +1637,23 @@ local function mi_handle_line(line)
 		S.finishing_after_main_return = false
 		status("Program exited | F9 to restart")
 		append_output("Exit code: unknown")
+	end
+end
+
+local function mi_feed_stdout(data)
+	data = data or {}
+	for index, fragment in ipairs(data) do
+		S.mi_stdout_buffer = (S.mi_stdout_buffer or "") .. fragment
+		-- Neovim gives complete lines except for the final item in each callback.
+		-- Only join fragments across callbacks; treating each callback as a line
+		-- breaks MI records when a long response arrives in multiple chunks.
+		if index < #data or fragment == "" then
+			local line = S.mi_stdout_buffer:gsub("\r$", "")
+			S.mi_stdout_buffer = ""
+			if line ~= "" and not line:match("^%(%gdb%)") then
+				mi_handle_line(line)
+			end
+		end
 	end
 end
 
@@ -1824,12 +1924,21 @@ local function gdb_start()
 	local channel_info = terminal_channel > 0 and vim.api.nvim_get_chan_info(terminal_channel) or {}
 	local inferior_tty = channel_info.pty or ""
 	if inferior_tty == "" then
+		hide_terminal()
+		if S.terminal_job and S.terminal_job > 0 then
+			pcall(vim.fn.jobstop, S.terminal_job)
+			S.terminal_job = nil
+		end
 		notify("Could not get the program input terminal device.", vim.log.levels.ERROR)
 		return
 	end
 	hide_terminal()
+	-- Creating and closing the PTY split changes Neovim's current window. The
+	-- debugger controls are buffer-local, so restore focus before GDB starts.
+	focus_debugger_panel("assembly")
 	append_output("Program I/O terminal is hidden until GDB detects a read from fd 0.")
 	S.backend = "GDB/MI2 / ELF"
+	S.mi_stdout_buffer = ""
 	status("Connecting to GDB…")
 	S.job = vim.fn.jobstart({ gdb, "--quiet", "--nx", "--interpreter=mi2" }, {
 		stdin = "pipe",
@@ -1837,9 +1946,7 @@ local function gdb_start()
 		stderr_buffered = false,
 		on_stdout = function(_, data)
 			vim.schedule(function()
-				for _, line in ipairs(data or {}) do
-					if line ~= "" then mi_handle_line(line) end
-				end
+				mi_feed_stdout(data)
 			end)
 		end,
 		on_stderr = function(_, data)
@@ -1883,32 +1990,75 @@ local function gdb_start()
 		try_entry(1)
 	end
 	local function load_executable()
-		mi_send("-catch-syscall read readv", function(catch_response)
-			if catch_response:match("%^error") then
-				append_output("Automatic stdin detection is unavailable in this GDB build.")
-			else
-				append_output("Waiting for stdin reads; the input window will open when fd 0 is read.")
+		local function install_function_fallback(index)
+			local names = { "read", "readv", "__read", "__libc_read" }
+			local name = names[index]
+			if not name then
+				if next(S.input_breakpoint_ids) then
+					append_output("Waiting for read/readv function breakpoints; the input window opens when fd 0 is read.")
+				else
+					append_output("GDB could not install stdin read breakpoints; use I to open the input terminal manually.")
+				end
+				start_at_main_or_entry()
+				return
 			end
-			mi_send("-inferior-tty-set " .. inferior_tty, function(tty_response)
-				if tty_response:match("%^error") then
-					status("GDB could not set the program input terminal")
+			mi_send("-break-insert -f " .. name, function(response)
+				local breakpoint_id = field(response, "number")
+				if not response:match("%^error") and breakpoint_id then
+					S.input_breakpoint_ids[breakpoint_id] = true
+				end
+				install_function_fallback(index + 1)
+			end, true)
+		end
+		local function install_input_detection()
+			-- `-catch-syscall` is not a GDB/MI command. Use the documented CLI
+			-- catchpoint through MI's interpreter bridge, then fall back to libc
+			-- function breakpoints on GDB/targets without syscall catch support.
+			mi_send('-interpreter-exec console "catch syscall read readv"', function(response)
+				if response:match("%^error") then
+					S.syscall_catchpoint_active = false
+					install_function_fallback(1)
+				else
+					S.syscall_catchpoint_active = true
+					append_output("Waiting for read/readv syscalls; the input window opens when fd 0 is read.")
+					start_at_main_or_entry()
+				end
+			end, true)
+		end
+		mi_send("-inferior-tty-set " .. inferior_tty, function(tty_response)
+			if tty_response:match("%^error") then
+				status("GDB could not set the program input terminal")
+				return
+			end
+			mi_send("-file-exec-and-symbols " .. string.format("%q", S.executable), function(file_response)
+				if file_response:match("%^error") then
+					status("GDB could not load the executable")
 					return
 				end
-				mi_send("-file-exec-and-symbols " .. string.format("%q", S.executable), function()
-					start_at_main_or_entry()
-				end)
+				install_input_detection()
 			end)
 		end)
 	end
-	mi_send("-gdb-set pagination off", function()
-		mi_send("-gdb-set confirm off", function()
-			if S.architecture == "x86_64" then
-				mi_send("-gdb-set disassembly-flavor intel", load_executable)
-			else
-				load_executable()
-			end
+	local function configure_gdb()
+		mi_send("-gdb-set pagination off", function()
+			mi_send("-gdb-set confirm off", function()
+				if S.architecture == "x86_64" then
+					mi_send("-gdb-set disassembly-flavor intel", load_executable)
+				else
+					load_executable()
+				end
+			end)
 		end)
-	end)
+	end
+	-- MI is synchronous by default. Enable async before starting the inferior so
+	-- step/continue produce the *running/*stopped events that drive every refresh.
+	mi_send("-gdb-set mi-async on", function(response)
+		if response:match("%^error") then
+			mi_send("-gdb-set target-async on", function() configure_gdb() end, true)
+		else
+			configure_gdb()
+		end
+	end, true)
 end
 
 local function detect_target(executable)
@@ -2031,6 +2181,13 @@ local function step_mi(command)
 			status("Instruction step failed")
 		elseif response:match("%^running") then
 			-- Keep the lock until the *stopped event arrives.
+		elseif response:match("%^done") and S.step_request_pending then
+			-- Some older/foreground MI targets report completion synchronously and
+			-- omit an asynchronous *stopped record.
+			S.step_request_pending = false
+			S.running, S.started = false, true
+			status("Paused — instruction step complete")
+			refresh_mi()
 		end
 	end)
 end
@@ -2038,6 +2195,22 @@ end
 local function bind_keys(buf)
 	local function map(key, callback, description)
 		vim.keymap.set("n", key, callback, { buffer = buf, silent = true, nowait = true, desc = description })
+	end
+	local function continue_gdb()
+		if not S.job or S.running then return end
+		S.running = true
+		status("Running")
+		mi_send("-exec-continue", function(response)
+			if response:match("%^error") then
+				S.running = false
+				status("GDB could not continue the program")
+			elseif response:match("%^done") and S.running then
+				-- Synchronous MI completes only after the next stop.
+				S.running, S.started = false, true
+				status("Paused")
+				refresh_mi()
+			end
+		end)
 	end
 	local function continue_program()
 		if not S.job then return end
@@ -2054,7 +2227,7 @@ local function bind_keys(buf)
 		elseif not S.started then
 			status("GDB is preparing the program…")
 		elseif not S.running then
-			mi_send("-exec-continue")
+			continue_gdb()
 		end
 	end
 	local function step_instruction(step_over)
@@ -2066,12 +2239,12 @@ local function bind_keys(buf)
 		if is_at_main_return() then
 			-- Let ret and the runtime exit normally to collect the real exit code.
 			S.finishing_after_main_return = true
-			S.running = true
 			status("Main returned — waiting for exit code…")
 			if S.backend and S.backend:match("LLDB%-DAP") then
+				S.running = true
 				dap_send("continue", { threadId = S.thread_id })
 			else
-				mi_send("-exec-continue")
+				continue_gdb()
 			end
 			return
 		end
@@ -2103,6 +2276,37 @@ local function bind_keys(buf)
 		local win = S.windows.assembly
 		if win and vim.api.nvim_win_is_valid(win) then vim.api.nvim_set_current_win(win) end
 	end
+	local function focus_source()
+		local win = S.windows.source
+		if win and vim.api.nvim_win_is_valid(win) then vim.api.nvim_set_current_win(win) end
+	end
+	local function focus_registers()
+		local win = S.windows.registers
+		if win and vim.api.nvim_win_is_valid(win) then vim.api.nvim_set_current_win(win) end
+	end
+	local function focus_memory()
+		local win = S.windows.stack
+		if win and vim.api.nvim_win_is_valid(win) then vim.api.nvim_set_current_win(win) end
+	end
+	local function scroll(motion)
+		return function()
+			local win = vim.api.nvim_get_current_win()
+			if not vim.api.nvim_win_is_valid(win) then return end
+			if win == S.windows.assembly or win == S.windows.source then
+				S.follow_pc = false
+			elseif win == S.windows.stack then
+				S.follow_memory = false
+			end
+			local delta
+			if motion == "j" then delta = 1
+			elseif motion == "k" then delta = -1
+			elseif motion == "<C-d>" then delta = math.max(1, math.floor(vim.api.nvim_win_get_height(win) / 2))
+			else delta = -math.max(1, math.floor(vim.api.nvim_win_get_height(win) / 2)) end
+			local cursor = vim.api.nvim_win_get_cursor(win)
+			local last_line = vim.api.nvim_buf_line_count(vim.api.nvim_win_get_buf(win))
+			vim.api.nvim_win_set_cursor(win, { math.max(1, math.min(last_line, cursor[1] + delta)), cursor[2] })
+		end
+	end
 	map("q", close, "Close debugger")
 	map("I", function()
 		S.waiting_for_input = true
@@ -2129,6 +2333,25 @@ local function bind_keys(buf)
 	map("p", interrupt_program, "Pause program")
 	map("r", restart_program, "Restart program")
 	map("a", focus_assembly, "Focus assembly panel")
+	map("v", focus_source, "Focus source panel")
+	map("R", focus_registers, "Focus register panel")
+	map("m", focus_memory, "Focus memory panel")
+	for _, key in ipairs({ "j", "k", "<C-d>", "<C-u>" }) do
+		map(key, scroll(key), "Scroll panel; code and memory follow pause while scrolling")
+	end
+	map("f", function()
+		S.follow_pc = not S.follow_pc
+		if S.follow_pc then
+			render_assembly()
+			render_source()
+		end
+		status(S.follow_pc and "Auto-following the current instruction" or "Auto-follow off — scroll with j/k; press f to follow again")
+	end, "Toggle automatic code following")
+	map("F", function()
+		S.follow_memory = not S.follow_memory
+		if S.follow_memory then render_stack_regions(S.stack_regions) end
+		status(S.follow_memory and "Memory view following SP" or "Memory auto-follow off — scroll with j/k; press F to follow SP")
+	end, "Toggle automatic memory following")
 end
 
 function M.open(executable)
@@ -2178,6 +2401,9 @@ function M.open(executable)
 	S.instructions, S.regs, S.output = {}, {}, {}
 	S.pc, S.sp, S.fp = nil, nil, nil
 	S.source_line = nil
+	S.follow_pc = true
+	S.follow_memory = true
+	S.stack_regions = {}
 	load_source_for_executable(executable)
 	S.started, S.running, S.finished, S.dap_launched = false, false, false, false
 	S.step_request_pending = false
@@ -2189,6 +2415,7 @@ function M.open(executable)
 	S.thread_id = 1
 	S.dap_buffer, S.dap_expected = "", nil
 	S.input_breakpoint_ids, S.syscall_breakpoint_ids = {}, {}
+	S.syscall_catchpoint_active = false
 	S.input_breakpoint_hit, S.input_syscall_breakpoint_hit = false, false
 	S.waiting_for_input = false
 	S.terminal_output, S.terminal_output_text = {}, ""

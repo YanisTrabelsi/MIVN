@@ -139,13 +139,17 @@ Leader key: `<Space>`
 | `<leader>ad` | Pick an executable in the current directory for ASM debugging |
 | `I` (ASM debugger) | Open the program input prompt manually |
 | `c` / `s` / `n` (ASM debugger) | Continue / step into / step over one instruction |
-| `p` / `r` / `a` (ASM debugger) | Pause / restart / focus the assembly panel |
+| `p` / `r` (ASM debugger) | Pause / restart |
+| `a` / `v` (ASM debugger) | Focus assembly / source |
+| `R` / `m` (ASM debugger) | Focus registers / memory |
+| `j` / `k` / `<C-d>` / `<C-u>` (ASM debugger) | Scroll the focused panel; scrolling code or memory pauses auto-follow |
+| `f` / `F` (ASM debugger) | Toggle code following / memory following |
 | `K` (ASM)    | Show instruction documentation |
 | `<C-k>` (ASM, insert mode) | Show operand signature help |
 
-The ASM debugger keeps its program terminal hidden until it detects a read from stdin. When the input window appears, type a line and press `<Enter>`; the window closes and execution resumes. Program output from the hidden terminal is copied into the **PROGRAM OUTPUT** panel. Press `I` in a debugger panel to open the input terminal manually.
+The ASM debugger keeps its program terminal hidden until it detects a read from stdin. When the input window appears, type a line and press `<Enter>`; the window closes and execution resumes. Program output from the hidden terminal is copied into the **PROGRAM OUTPUT** panel. Press `I` in a debugger panel to open the input terminal manually. In the debugger, use `a`/`v` to focus code, `R` for registers, and `m` for the memory dump. `j`/`k` and `<C-d>`/`<C-u>` scroll the focused panel. Scrolling assembly or source turns off automatic PC following so each refresh does not jump back; `f` toggles it. Scrolling memory pauses its automatic SP tracking; `F` toggles that tracking. Register and memory values refresh whenever execution stops after a step, breakpoint, or signal. GDB's complete register list is shown, including architecture-specific and SIMD registers, and can be scrolled in the register panel.
 
-Input detection covers `read` and `readv` system calls with file descriptor 0 in GDB, common `read` functions in LLDB, and source-mapped `svc`/`syscall` instructions in LLDB.
+Input detection covers `read` and `readv` system calls with file descriptor 0 in GDB, falling back to common libc read functions when syscall catchpoints are unavailable. LLDB checks common `read` functions and source-mapped `svc`/`syscall` instructions.
 
 ### Snippets
 
