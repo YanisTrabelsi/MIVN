@@ -1771,7 +1771,11 @@ local function gdb_start()
 		notify("Could not open the program input terminal: " .. tostring(terminal_error), vim.log.levels.ERROR)
 		return
 	end
-	local inferior_tty = vim.fn.term_gettty(terminal_buf, 1)
+	-- Neovim exposes a terminal job's PTY through channel metadata; term_gettty()
+	-- is a Vim function and is not available in Neovim.
+	local terminal_channel = vim.bo[terminal_buf].channel
+	local channel_info = terminal_channel > 0 and vim.api.nvim_get_chan_info(terminal_channel) or {}
+	local inferior_tty = channel_info.pty or ""
 	if inferior_tty == "" then
 		notify("Could not get the program input terminal device.", vim.log.levels.ERROR)
 		return
