@@ -253,6 +253,13 @@ local function panel(name, title, width, height, row, col, opts)
 	return buf
 end
 
+local function focus_debugger_panel(name)
+	local win = S.windows[name or "assembly"]
+	if win and vim.api.nvim_win_is_valid(win) then
+		vim.api.nvim_set_current_win(win)
+	end
+end
+
 local function field(text, name)
 	return text and text:match(name .. '="([^"]*)"')
 end
@@ -372,6 +379,7 @@ local function send_input_and_continue()
 		return
 	end
 	hide_terminal()
+	focus_debugger_panel("assembly")
 	S.waiting_for_input = false
 	S.running = true
 	status("Input sent — continuing")
@@ -512,6 +520,7 @@ local function handle_run_in_terminal(request)
 	append_output("Program I/O terminal is hidden until the debugger detects a stdin read.")
 	dap_respond(request, true, { processId = vim.fn.jobpid(job) })
 	hide_terminal()
+	focus_debugger_panel("assembly")
 end
 
 local function number_from_value(value)
@@ -1843,6 +1852,20 @@ local function gdb_start()
 		notify("Could not start GDB.", vim.log.levels.ERROR)
 		return
 	end
+	local function start_at_main_or_entry()
+		mi_send("-break-insert -t main", function(breakpoint_response)
+			if breakpoint_response:match("%d+%^done") then
+				mi_send("-exec-run", function(run_response)
+					if run_response:match("%d+%^error") then
+						status("GDB could not start the program")
+					end
+				end)
+			else
+				-- Programs without a main symbol can still start at their entry point.
+				mi_send('-interpreter-exec console "starti"')
+			end
+		end, true)
+	end
 	local function load_executable()
 		mi_send("-catch-syscall read readv", function(catch_response)
 			if catch_response:match("%^error") then
@@ -1856,11 +1879,7 @@ local function gdb_start()
 					return
 				end
 				mi_send("-file-exec-and-symbols " .. string.format("%q", S.executable), function()
-					mi_send('-interpreter-exec console "starti"', function(response)
-						if response:match("%^error") then
-							status("GDB could not start the program")
-						end
-					end)
+					start_at_main_or_entry()
 				end)
 			end)
 		end)
@@ -2017,7 +2036,7 @@ local function bind_keys(buf)
 				dap_send("continue", { threadId = S.thread_id })
 			end
 		elseif not S.started then
-			mi_send('-interpreter-exec console "starti"')
+			status("GDB is preparing the program…")
 		elseif not S.running then
 			mi_send("-exec-continue")
 		end
@@ -2186,6 +2205,7 @@ function M.open(executable)
 	panel("stack", target.arch == "arm64" and "STACK / MEMORY — SP / FP" or "STACK / MEMORY — RSP / RBP", right_width, stack_height, body_row, right_col)
 	panel("output", "PROGRAM OUTPUT", right_width, output_height, body_row + stack_height + 2, right_col)
 	for _, buf in pairs(S.buffers) do bind_keys(buf) end
+	focus_debugger_panel("assembly")
 
 	status(string.format("Target detected: %s %s", target.format, target.arch))
 	local description_lines = vim.split(vim.trim(target.description or ""), "\n", { plain = true, trimempty = true })
