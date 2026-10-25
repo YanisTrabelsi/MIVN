@@ -383,7 +383,9 @@ local function send_input_and_continue()
 end
 
 local function open_terminal(command, opts, prefer_split)
-	opts = opts or {}
+	-- `vim.fn` converts an empty Lua table to a Vim list. termopen expects its
+	-- second argument to be a dictionary, so preserve the empty-dictionary type.
+	opts = opts or vim.empty_dict()
 	local buf = vim.api.nvim_create_buf(false, true)
 	vim.bo[buf].bufhidden = "hide"
 	S.terminal_buf = buf
