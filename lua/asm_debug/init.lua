@@ -1853,18 +1853,27 @@ local function gdb_start()
 		return
 	end
 	local function start_at_main_or_entry()
-		mi_send("-break-insert -t main", function(breakpoint_response)
-			if breakpoint_response:match("%d+%^done") then
+		local entry_symbols = { "main", "_start" }
+		local function try_entry(index)
+			local symbol = entry_symbols[index]
+			if not symbol then
+				-- Symbol-less binaries can still start at their ELF entry point.
+				mi_send('-interpreter-exec console "starti"')
+				return
+			end
+			mi_send("-break-insert -t " .. symbol, function(breakpoint_response)
+				if not breakpoint_response:match("%d+%^done") then
+					try_entry(index + 1)
+					return
+				end
 				mi_send("-exec-run", function(run_response)
 					if run_response:match("%d+%^error") then
 						status("GDB could not start the program")
 					end
 				end)
-			else
-				-- Programs without a main symbol can still start at their entry point.
-				mi_send('-interpreter-exec console "starti"')
-			end
-		end, true)
+			end, true)
+		end
+		try_entry(1)
 	end
 	local function load_executable()
 		mi_send("-catch-syscall read readv", function(catch_response)
