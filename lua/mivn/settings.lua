@@ -1,335 +1,318 @@
 local M = {}
 
 local defaults = {
-	flavour = "mocha",
-	accent = "purple_green",
-	dashboard_layout = "centered",
-	dashboard_language = "en",
-	dashboard_animation = true,
-	autosave_delay_ms = 200,
-	languages = {
-		assembly = true,
-		c = true,
-		python = true,
-		bash = true,
-		lua = true,
+	theme = {
+		flavour = "mocha",
+		transparent_background = true,
+		transparent_floats = true,
+		colors = {
+			primary = "#CBA6F7", secondary = "#A6F7B2", background = "#1E1E2E",
+			text = "#CDD6F4", muted = "#6C7086", surface = "#313244",
+			error = "#F38BA8", warning = "#F9E2AF", success = "#A6E3A1", info = "#89B4FA", visual = "#FAB387",
+		},
 	},
+	dashboard = {
+		language = "en",
+		layout = "centered",
+		show_logo = true,
+		title = "MIVN your editor",
+		animation = { enabled = true, effect = "glow", period_ms = 9000, width = 3 },
+	},
+	autosave = { enabled = true, delay_ms = 200 },
+	languages = { assembly = true, c = true, cpp = true, python = true, bash = true, lua = true },
+	plugins = {
+		catppuccin = true, dashboard = true, which_key = true, noice = true,
+		telescope = true, oil = true, toggleterm = true, treesitter = true,
+		autopairs = true, conform = true, lint = true, lsp = true,
+		completion = true, luasnip = true, friendly_snippets = true,
+		asm_debug = true, auto_session = true,
+		undotree = true, hlchunk = true, render_markdown = true,
+	},
+	plugin_options = {},
 }
 
-local flavours = { mocha = true, macchiato = true, frappe = true, latte = true }
-local accents = {
-	purple_green = { label = "Purple / green", primary = "#CBA6F7", secondary = "#A6F7B2" },
-	blue_cyan = { label = "Blue / cyan", primary = "#89B4FA", secondary = "#74D7F0" },
-	rose_peach = { label = "Rose / peach", primary = "#F38BA8", secondary = "#FAB387" },
-}
-local layouts = { centered = true, compact = true, top = true }
-local languages = {
-	assembly = { label = "Assembly", server = "asm_lsp", executable = "asm-lsp" },
-	c = { label = "C / C++", server = "clangd", executable = "clangd" },
-	python = { label = "Python", server = "pyright", executable = "pyright-langserver" },
-	bash = { label = "Shell", server = "bashls", executable = "bash-language-server" },
-	lua = { label = "Lua", server = "lua_ls", executable = "lua-language-server" },
-}
+local config_path = vim.fn.stdpath("config") .. "/lua/mivn/user_config.lua"
+local config = vim.deepcopy(defaults)
 
-local settings = vim.deepcopy(defaults)
-local settings_path = vim.fn.stdpath("state") .. "/mivn-settings.json"
+local function is_list(value)
+	if vim.islist then
+		return vim.islist(value)
+	end
+	for key in pairs(value) do
+		if type(key) ~= "number" then
+			return false
+		end
+	end
+	return true
+end
+
+local function merge(base, override)
+	if type(override) ~= "table" then
+		return base
+	end
+	for key, value in pairs(override) do
+		if type(value) == "table" and not is_list(value) then
+			base[key] = merge(type(base[key]) == "table" and base[key] or {}, value)
+		else
+			base[key] = vim.deepcopy(value)
+		end
+	end
+	return base
+end
+
+local function clamp_number(value, fallback, minimum, maximum)
+	if type(value) ~= "number" then
+		return fallback
+	end
+	return math.floor(math.max(minimum, math.min(maximum, value)))
+end
+
+local function valid_color(value)
+	return type(value) == "string" and value:match("^#%x%x%x%x%x%x$") ~= nil
+end
 
 local function normalize(raw)
-	if type(raw) ~= "table" then return vim.deepcopy(defaults) end
-	local result = vim.deepcopy(defaults)
-	if flavours[raw.flavour] then result.flavour = raw.flavour end
-	if accents[raw.accent] then result.accent = raw.accent end
-	if layouts[raw.dashboard_layout] then result.dashboard_layout = raw.dashboard_layout end
-	if raw.dashboard_language == "en" or raw.dashboard_language == "fr" then
-		result.dashboard_language = raw.dashboard_language
+	local result = merge(vim.deepcopy(defaults), raw)
+	for key, fallback in pairs(defaults) do
+		if type(fallback) == "table" and type(result[key]) ~= "table" then
+			result[key] = vim.deepcopy(fallback)
+		end
 	end
-	if type(raw.dashboard_animation) == "boolean" then result.dashboard_animation = raw.dashboard_animation end
-	if raw.autosave_delay_ms == 100 or raw.autosave_delay_ms == 200 or raw.autosave_delay_ms == 400 then
-		result.autosave_delay_ms = raw.autosave_delay_ms
+	for key, fallback in pairs(defaults.theme) do
+		if type(fallback) == "table" and type(result.theme[key]) ~= "table" then
+			result.theme[key] = vim.deepcopy(fallback)
+		end
 	end
-	if type(raw.languages) == "table" then
-		for name in pairs(languages) do
-			if type(raw.languages[name]) == "boolean" then result.languages[name] = raw.languages[name] end
+	if type(result.dashboard.animation) ~= "table" then
+		result.dashboard.animation = vim.deepcopy(defaults.dashboard.animation)
+	end
+	if type(result.plugin_options) ~= "table" then
+		result.plugin_options = {}
+	end
+	local table_options = {
+		dashboard = { "setup" },
+		catppuccin = { "integrations", "styles", "color_overrides", "highlight_overrides" },
+		asm_debug = {},
+		render_markdown = {},
+		which_key = { "setup", "padding", "layout_width" },
+		telescope = { "setup", "defaults", "extensions", "path_display", "borderchars" },
+		oil = { "setup", "float" },
+		toggleterm = { "setup" },
+		treesitter = { "setup", "parsers" },
+		autopairs = { "setup" },
+		completion = { "setup" },
+		conform = { "setup", "formatters_by_ft" },
+		lint = { "linters_by_ft", "events" },
+		lsp = { "mason", "mason_lspconfig", "capabilities", "servers" },
+		auto_session = { "setup", "suppressed_dirs" },
+		hlchunk = { "setup", "indent_colors" },
+		noice = { "setup", "cmdline_position", "cmdline_size", "popupmenu_position", "popupmenu_size" },
+	}
+	for name, keys in pairs(table_options) do
+		if type(result.plugin_options[name]) ~= "table" then
+			result.plugin_options[name] = {}
+		end
+		for _, key in ipairs(keys) do
+			if result.plugin_options[name][key] ~= nil and type(result.plugin_options[name][key]) ~= "table" then
+				result.plugin_options[name][key] = {}
+			end
+		end
+	end
+	if not ({ mocha = true, macchiato = true, frappe = true, latte = true })[result.theme.flavour] then
+		result.theme.flavour = defaults.theme.flavour
+	end
+	result.theme.transparent_background = result.theme.transparent_background ~= false
+	result.theme.transparent_floats = result.theme.transparent_floats ~= false
+	for key, fallback in pairs(defaults.theme.colors) do
+		if not valid_color(result.theme.colors[key]) then
+			result.theme.colors[key] = fallback
+		end
+	end
+	if result.dashboard.language ~= "en" and result.dashboard.language ~= "fr" then
+		result.dashboard.language = defaults.dashboard.language
+	end
+	if not ({ centered = true, compact = true, top = true })[result.dashboard.layout] then
+		result.dashboard.layout = defaults.dashboard.layout
+	end
+	if type(result.dashboard.title) ~= "string" or result.dashboard.title == "" then
+		result.dashboard.title = defaults.dashboard.title
+	end
+	result.dashboard.animation.enabled = result.dashboard.animation.enabled == true
+	if result.dashboard.animation.effect ~= "glow" and result.dashboard.animation.effect ~= "off" then
+		result.dashboard.animation.effect = defaults.dashboard.animation.effect
+	end
+	result.dashboard.animation.period_ms = clamp_number(result.dashboard.animation.period_ms, 9000, 4000, 30000)
+	result.dashboard.animation.width = clamp_number(result.dashboard.animation.width, 3, 1, 8)
+	result.autosave.enabled = result.autosave.enabled ~= false
+	result.dashboard.show_logo = result.dashboard.show_logo ~= false
+	result.autosave.delay_ms = clamp_number(result.autosave.delay_ms, 200, 50, 2000)
+	for key, fallback in pairs(defaults.languages) do
+		if type(result.languages[key]) ~= "boolean" then
+			result.languages[key] = fallback
+		end
+	end
+	for key in pairs(defaults.plugins) do
+		if type(result.plugins[key]) ~= "boolean" then
+			result.plugins[key] = true
 		end
 	end
 	return result
 end
 
-local function load()
-	if vim.fn.filereadable(settings_path) ~= 1 then return end
-	local ok, decoded = pcall(vim.json.decode, table.concat(vim.fn.readfile(settings_path), "\n"))
-	if ok then settings = normalize(decoded) end
+local function read_config(fallback)
+	local chunk, compile_error = loadfile(config_path)
+	if not chunk then
+		if vim.fn.filereadable(config_path) == 1 then
+			vim.notify("MIVN settings syntax error; keeping the last valid settings: " .. tostring(compile_error), vim.log.levels.ERROR)
+		end
+		return vim.deepcopy(fallback or defaults), false
+	end
+	local ok, loaded = pcall(chunk)
+	if not ok or type(loaded) ~= "table" then
+		vim.notify("MIVN settings must return a Lua table; keeping the last valid settings.", vim.log.levels.ERROR)
+		return vim.deepcopy(fallback or defaults), false
+	end
+	return normalize(loaded), true
 end
 
-local function save()
-	local directory = vim.fn.fnamemodify(settings_path, ":h")
-	vim.fn.mkdir(directory, "p")
-	local ok, encoded = pcall(vim.json.encode, settings)
-	if not ok then
-		vim.notify("Could not encode MIVN settings: " .. tostring(encoded), vim.log.levels.ERROR)
-		return false
-	end
-	local result = vim.fn.writefile({ encoded }, settings_path)
-	if result ~= 0 then
-		vim.notify("Could not save MIVN settings to " .. settings_path, vim.log.levels.ERROR)
-		return false
-	end
-	return true
-end
-
-load()
+config = read_config()
 
 function M.get()
-	return vim.deepcopy(settings)
+	return vim.deepcopy(config)
 end
 
-function M.palette()
-	return vim.deepcopy(accents[settings.accent] or accents.purple_green)
+function M.path()
+	return config_path
 end
 
-local function apply_language(name, enabled)
-	if not vim.g.mivn_lsp_ready then return end
-	local info = languages[name]
-	if not info then return end
-	if enabled and vim.fn.executable(info.executable) ~= 1 then
-		vim.notify(info.executable .. " is not on PATH. Install it, then restart Neovim to enable " .. info.label .. " support.", vim.log.levels.WARN)
-		return
-	end
-	local ok, err = pcall(vim.lsp.enable, info.server, enabled)
-	if not ok then
-		vim.notify("Could not update " .. info.label .. " language support: " .. tostring(err), vim.log.levels.ERROR)
-		return
-	end
-	if not enabled then
-		for _, client in ipairs(vim.lsp.get_clients({ name = info.server })) do
-			vim.lsp.stop_client(client.id)
-		end
-	end
-end
-
-function M.set(key, value)
-	local previous = vim.deepcopy(settings)
-	local changed_language
-	if key == "flavour" and flavours[value] then
-		settings.flavour = value
-	elseif key == "accent" and accents[value] then
-		settings.accent = value
-	elseif key == "dashboard_layout" and layouts[value] then
-		settings.dashboard_layout = value
-	elseif key == "dashboard_language" and (value == "en" or value == "fr") then
-		settings.dashboard_language = value
-	elseif key == "dashboard_animation" and type(value) == "boolean" then
-		settings.dashboard_animation = value
-	elseif key == "autosave_delay_ms" and (value == 100 or value == 200 or value == 400) then
-		settings.autosave_delay_ms = value
-	elseif key == "language" and languages[value] then
-		settings.languages[value] = not settings.languages[value]
-		changed_language = value
-	else
+function M.plugin_enabled(name)
+	-- The assembly debugger opens its executable picker with Telescope.
+	if name == "asm_debug" and not config.plugins.telescope then
 		return false
 	end
-	if not save() then
-		settings = previous
-		return false
-	end
-
-	if key == "flavour" or key == "accent" then
-		local ok, theme = pcall(require, "mivn.theme")
-		if ok then
-			if key == "flavour" then theme.set_flavour(settings.flavour) else theme.apply() end
-		end
-	elseif key == "dashboard_layout" or key == "dashboard_language" then
-		local ok, dashboard = pcall(require, "mivn.dashboard")
-		if ok then pcall(dashboard.setup) end
-	elseif key == "dashboard_animation" then
-		local ok, dashboard = pcall(require, "mivn.dashboard")
-		if ok then dashboard.refresh_animation() end
-	end
-	if changed_language then
-		apply_language(changed_language, settings.languages[changed_language])
-	end
-	if key == "flavour" or key == "accent" or key == "dashboard_language" or key == "dashboard_layout" then
-		pcall(vim.api.nvim_exec_autocmds, "User", { pattern = "MivnSettingsChanged" })
-	end
-	return true
+	return config.plugins[name] ~= false
 end
 
-local page = { buffer = nil, return_buffer = nil }
-
-local function tr(english, french)
-	return settings.dashboard_language == "fr" and french or english
+function M.plugin_options(name)
+	local options = config.plugin_options[name]
+	return type(options) == "table" and vim.deepcopy(options) or {}
 end
 
-local function render_page()
-	local buf = page.buffer
-	if not buf or not vim.api.nvim_buf_is_valid(buf) then return end
-	local palette = M.palette()
-	local lines = {
-		"MIVN SETTINGS",
-		"",
-		tr("Personalize your editor. Changes are saved automatically.", "Personnalisez votre éditeur. Les changements sont sauvegardés automatiquement."),
-		"",
-		"APPEARANCE",
-		"  c  " .. tr("Colors", "Couleurs") .. ": Catppuccin " .. settings.flavour .. " / " .. palette.label,
-		"  d  " .. tr("Dashboard layout", "Disposition du dashboard") .. ": " .. settings.dashboard_layout,
-		"  a  " .. tr("Subtle dashboard animation", "Animation discrète du dashboard") .. ": " .. (settings.dashboard_animation and tr("On", "Activée") or tr("Off", "Désactivée")),
-		"  l  " .. tr("Dashboard language", "Langue du dashboard") .. ": " .. (settings.dashboard_language == "en" and "English" or "Français"),
-		"",
-		"LANGUAGE SERVERS",
-	}
-	for _, name in ipairs({ "assembly", "c", "python", "bash", "lua" }) do
-		local info = languages[name]
-		local mark = settings.languages[name] and "[x]" or "[ ]"
-		lines[#lines + 1] = string.format("  %s %s  (%s)", mark, info.label, info.server)
-	end
-	table.insert(lines, "  g  " .. tr("Toggle a language server", "Activer/désactiver un serveur de langue"))
-	table.insert(lines, "")
-	table.insert(lines, "EDITING")
-	table.insert(lines, "  s  " .. tr("Autosave delay outside Insert mode", "Délai d'autosauvegarde hors mode Insert") .. ": " .. settings.autosave_delay_ms .. " ms")
-	table.insert(lines, "")
-	table.insert(lines, tr("Notifications: Neovim default display", "Notifications : affichage natif de Neovim"))
-	table.insert(lines, "")
-	table.insert(lines, "  r  " .. tr("Reset settings", "Réinitialiser les réglages") .. "    q  " .. tr("Close settings tab", "Fermer l'onglet des réglages"))
-	table.insert(lines, "")
-	table.insert(lines, tr("Press a key or use <Enter> on an item.", "Appuyez sur une touche ou <Entrée> sur une option."))
-	vim.bo[buf].modifiable = true
-	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-	vim.bo[buf].modifiable = false
-	local ns = vim.api.nvim_create_namespace("MivnSettings")
-	vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
-	vim.api.nvim_buf_add_highlight(buf, ns, "MivnSettingsTitle", 0, 0, -1)
-	for row, line in ipairs(lines) do
-		if line == "APPEARANCE" or line == "LANGUAGE SERVERS" or line == "EDITING" then
-			vim.api.nvim_buf_add_highlight(buf, ns, "MivnSettingsHeading", row - 1, 0, -1)
-		elseif line:match("^%s+%[x%]") then
-			vim.api.nvim_buf_add_highlight(buf, ns, "MivnSettingsEnabled", row - 1, 0, -1)
+local function apply_runtime(previous)
+	local ok_theme, theme = pcall(require, "mivn.theme")
+	if ok_theme then
+		if config.plugins.catppuccin and package.loaded.catppuccin then
+			pcall(theme.setup_colorscheme)
+		else
+			pcall(theme.apply)
 		end
 	end
-end
 
-local function choose_flavour()
-	local choices = { "mocha", "macchiato", "frappe", "latte" }
-	vim.ui.select(choices, { prompt = tr("Catppuccin flavor", "Thème Catppuccin") }, function(choice)
-		if not choice then return end
-		M.set("flavour", choice)
-		vim.ui.select({ "purple_green", "blue_cyan", "rose_peach" }, { prompt = tr("Accent colors", "Couleurs d'accentuation"), format_item = function(item)
-			return accents[item].label
-		end }, function(accent)
-			if accent then M.set("accent", accent) end
-			render_page()
-		end)
-	end)
-end
-
-local function choose_language()
-	local choices = {}
-	local names = { "assembly", "c", "python", "bash", "lua" }
-	for _, name in ipairs(names) do
-		choices[#choices + 1] = string.format("%s  %s  [%s]", name, languages[name].label, settings.languages[name] and "on" or "off")
+	if config.plugins.dashboard and package.loaded.dashboard then
+		local ok_dashboard, dashboard = pcall(require, "mivn.dashboard")
+		if ok_dashboard then
+			pcall(dashboard.setup)
+			pcall(dashboard.refresh_open_dashboards)
+		end
 	end
-	vim.ui.select(choices, { prompt = tr("Toggle language server", "Activer/désactiver un serveur de langue") }, function(choice, index)
-		if not choice or not index then return end
-		M.set("language", names[index])
-		render_page()
-	end)
-end
 
-local function choose_autosave_delay()
-	local choices = { 100, 200, 400 }
-	vim.ui.select(choices, { prompt = tr("Autosave delay in milliseconds", "Délai d'autosauvegarde en millisecondes"), format_item = function(value)
-		return tostring(value) .. " ms"
-	end }, function(value)
-		if value then M.set("autosave_delay_ms", value) end
-		render_page()
-	end)
-end
-
-local function close_page()
-	local return_buffer = page.return_buffer
-	page.buffer, page.return_buffer = nil, nil
-	if vim.fn.tabpagenr("$") > 1 then
-		vim.cmd("tabclose")
-	else
-		pcall(vim.api.nvim_buf_delete, page.buffer or vim.api.nvim_get_current_buf(), { force = true })
-		vim.cmd("enew")
-	end
-	if return_buffer and vim.api.nvim_buf_is_valid(return_buffer) and vim.bo[return_buffer].filetype == "dashboard" then
-		vim.schedule(function()
-			if vim.api.nvim_buf_is_valid(return_buffer) then
-				vim.api.nvim_set_current_buf(return_buffer)
-				pcall(vim.cmd, "Dashboard")
+	if vim.g.mivn_lsp_ready and config.plugins.lsp then
+		local servers = {
+			assembly = "asm_lsp", c = "clangd", cpp = "clangd", python = "pyright", bash = "bashls", lua = "lua_ls",
+		}
+		local enabled = {}
+		local lsp_options = type(config.plugin_options.lsp) == "table" and config.plugin_options.lsp or {}
+		local custom_servers = type(lsp_options.servers) == "table" and lsp_options.servers or {}
+		for language, server in pairs(servers) do
+			enabled[server] = enabled[server] or config.languages[language]
+		end
+		for server, value in pairs(enabled) do
+			local server_options = custom_servers[server]
+			if type(server_options) == "table" and server_options.enabled ~= nil then
+				value = server_options.enabled == true
 			end
-		end)
+			if server == "asm_lsp" and vim.fn.exepath("asm-lsp") == "" then
+				value = false
+			elseif server == "clangd" then
+				local uname = vim.uv.os_uname()
+				if uname.sysname == "Linux" and uname.machine == "aarch64" and vim.fn.executable("clangd") ~= 1 then
+					value = false
+				end
+			end
+			pcall(vim.lsp.enable, server, value)
+		end
+		local asm_options = custom_servers.asm_lsp
+		if type(asm_options) == "table" and asm_options.enabled ~= nil then
+			pcall(vim.lsp.enable, "asm_lsp", asm_options.enabled == true)
+		end
+		for server, options in pairs(custom_servers) do
+			if not ({ asm_lsp = true, clangd = true, pyright = true, bashls = true, lua_ls = true })[server]
+				and type(options) == "table" and options.enabled ~= nil then
+				pcall(vim.lsp.enable, server, options.enabled == true)
+			end
+		end
+	elseif vim.g.mivn_lsp_ready then
+		for _, server in ipairs({ "asm_lsp", "clangd", "pyright", "bashls", "lua_ls" }) do
+			pcall(vim.lsp.enable, server, false)
+		end
+		local lsp_options = type(config.plugin_options.lsp) == "table" and config.plugin_options.lsp or {}
+		local custom_servers = type(lsp_options.servers) == "table" and lsp_options.servers or {}
+		for server, options in pairs(custom_servers) do
+			if not ({ asm_lsp = true, clangd = true, pyright = true, bashls = true, lua_ls = true })[server]
+				and type(options) == "table" and options.enabled == true then
+				pcall(vim.lsp.enable, server, false)
+			end
+		end
 	end
+
+	pcall(vim.api.nvim_exec_autocmds, "User", { pattern = "MivnSettingsReloaded" })
+
+	local changed = {}
+	local restart_required = previous and not vim.deep_equal(previous.plugin_options, config.plugin_options)
+	if previous then
+		for name, enabled in pairs(config.plugins) do
+			if previous.plugins[name] ~= enabled then
+				changed[#changed + 1] = name
+			end
+		end
+	end
+	if #changed > 0 then
+		table.sort(changed)
+		vim.notify("Plugin switches saved (restart Neovim to apply): " .. table.concat(changed, ", "), vim.log.levels.INFO)
+	elseif restart_required then
+		vim.notify("Plugin options reloaded. Restart Neovim to apply all plugin changes.", vim.log.levels.INFO)
+	else
+		vim.notify("MIVN settings reloaded.", vim.log.levels.INFO)
+	end
+end
+
+function M.reload()
+	local previous = vim.deepcopy(config)
+	local updated, valid = read_config(previous)
+	if not valid then
+		return false
+	end
+	config = updated
+	apply_runtime(previous)
+	return true
 end
 
 function M.open()
-	if page.buffer and vim.api.nvim_buf_is_valid(page.buffer) then
-		local windows = vim.fn.win_findbuf(page.buffer)
-		if windows[1] then
-			vim.api.nvim_set_current_win(windows[1])
-			return
-		end
-	end
-	page.return_buffer = vim.api.nvim_get_current_buf()
-	vim.cmd("tabnew")
-	local buf = vim.api.nvim_get_current_buf()
-	page.buffer = buf
-	vim.bo[buf].buftype = "nofile"
-	vim.bo[buf].bufhidden = "wipe"
-	vim.bo[buf].swapfile = false
-	vim.bo[buf].filetype = "mivn-settings"
-	vim.api.nvim_buf_set_name(buf, "MIVN Settings")
-	vim.wo.number = false
-	vim.wo.relativenumber = false
-	vim.wo.wrap = false
-	vim.wo.cursorline = true
-	local function map(key, callback, description)
-		vim.keymap.set("n", key, callback, { buffer = buf, silent = true, nowait = true, desc = description })
-	end
-	map("q", close_page, "Close MIVN settings")
-	map("<Esc>", close_page, "Close MIVN settings")
-	map("c", choose_flavour, "Change colors")
-	map("d", function()
-		vim.ui.select({ "centered", "compact", "top" }, { prompt = tr("Dashboard layout", "Disposition du dashboard") }, function(value)
-			if value then M.set("dashboard_layout", value) end
-			render_page()
-		end)
-	end, "Change dashboard layout")
-	map("a", function() M.set("dashboard_animation", not settings.dashboard_animation); render_page() end, "Toggle dashboard animation")
-	map("l", function()
-		vim.ui.select({ { label = "English", value = "en" }, { label = "Français", value = "fr" } }, { prompt = tr("Dashboard language", "Langue du dashboard"), format_item = function(item)
-			return item.label
-		end }, function(item)
-			if item then M.set("dashboard_language", item.value) end
-			render_page()
-		end)
-	end, "Change dashboard language")
-	map("g", choose_language, "Toggle a language server")
-	map("s", choose_autosave_delay, "Change autosave delay")
-	map("r", function()
-		local previous = settings
-		settings = vim.deepcopy(defaults)
-		if not save() then
-			settings = previous
-			render_page()
-			return
-		end
-		for name in pairs(languages) do apply_language(name, settings.languages[name]) end
-		local ok, theme = pcall(require, "mivn.theme"); if ok then theme.set_flavour(settings.flavour) end
-		local ok_dashboard, dashboard = pcall(require, "mivn.dashboard"); if ok_dashboard then pcall(dashboard.setup); dashboard.refresh_animation() end
-		pcall(vim.api.nvim_exec_autocmds, "User", { pattern = "MivnSettingsChanged" })
-		render_page()
-	end, "Reset MIVN settings")
-	map("<CR>", function()
-		local line = vim.api.nvim_win_get_cursor(0)[1]
-		local current = vim.api.nvim_buf_get_lines(buf, line - 1, line, false)[1] or ""
-		local key = current:match("^%s+([cdalgsr])%s")
-		if key then vim.api.nvim_feedkeys(key, "mt", false) end
-	end, "Activate setting on current line")
-	render_page()
+	vim.cmd("tabedit " .. vim.fn.fnameescape(config_path))
 end
 
-vim.api.nvim_create_user_command("MivnSettings", M.open, { desc = "Open MIVN settings" })
+vim.api.nvim_create_user_command("MivnSettings", M.open, { desc = "Edit MIVN settings" })
+vim.api.nvim_create_user_command("MivnSettingsReload", M.reload, { desc = "Reload MIVN settings" })
+
+local group = vim.api.nvim_create_augroup("MivnSettings", { clear = true })
+vim.api.nvim_create_autocmd("BufWritePost", {
+	group = group,
+	pattern = "user_config.lua",
+	callback = function(event)
+		if vim.fn.fnamemodify(vim.api.nvim_buf_get_name(event.buf), ":p") == vim.fn.fnamemodify(config_path, ":p") then
+			M.reload()
+		end
+	end,
+})
 
 return M

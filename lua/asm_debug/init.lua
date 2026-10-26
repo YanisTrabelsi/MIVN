@@ -63,25 +63,26 @@ local function notify(message, level)
 end
 
 local function setup_highlights()
+	local colors = require("mivn.settings").get().theme.colors
 	local palette = {
-		AsmDebugTitle = { fg = "#CBA6F7", bold = true },
-		AsmDebugAccent = { fg = "#A6F7B2", bold = true },
-		AsmDebugCurrent = { fg = "#1E1E2E", bg = "#A6F7B2", bold = true },
+		AsmDebugTitle = { fg = colors.primary, bold = true },
+		AsmDebugAccent = { fg = colors.secondary, bold = true },
+		AsmDebugCurrent = { fg = colors.background, bg = colors.secondary, bold = true },
 		-- Registers: distinct color categories.
-		AsmDebugRegister = { fg = "#CBA6F7", bold = true },
-		AsmDebugRegisterPC = { fg = "#F38BA8", bold = true },
-		AsmDebugRegisterSP = { fg = "#A6E3A1", bold = true },
-		AsmDebugRegisterFP = { fg = "#F9E2AF", bold = true },
-		AsmDebugRegisterLR = { fg = "#89B4FA", bold = true },
-		AsmDebugRegisterGeneral = { fg = "#74D7F0" },
-		AsmDebugChanged = { fg = "#1E1E2E", bg = "#F9E2AF", bold = true },
-		AsmDebugStackPointer = { fg = "#1E1E2E", bg = "#A6E3A1", bold = true },
-		AsmDebugBasePointer = { fg = "#1E1E2E", bg = "#F9E2AF", bold = true },
+		AsmDebugRegister = { fg = colors.primary, bold = true },
+		AsmDebugRegisterPC = { fg = colors.error, bold = true },
+		AsmDebugRegisterSP = { fg = colors.success, bold = true },
+		AsmDebugRegisterFP = { fg = colors.warning, bold = true },
+		AsmDebugRegisterLR = { fg = colors.info, bold = true },
+		AsmDebugRegisterGeneral = { fg = colors.secondary },
+		AsmDebugChanged = { fg = colors.background, bg = colors.warning, bold = true },
+		AsmDebugStackPointer = { fg = colors.background, bg = colors.success, bold = true },
+		AsmDebugBasePointer = { fg = colors.background, bg = colors.warning, bold = true },
 		-- Memory dump: address, bytes, ASCII, and SP pointer.
-		AsmDebugMemoryAddress = { fg = "#89B4FA", bold = true },
-		AsmDebugMemoryPointer = { fg = "#1E1E2E", bg = "#A6E3A1", bold = true },
-		AsmDebugMemoryFramePointer = { fg = "#1E1E2E", bg = "#F9E2AF", bold = true },
-		AsmDebugMemoryZero = { fg = "#6C7086" },
+		AsmDebugMemoryAddress = { fg = colors.info, bold = true },
+		AsmDebugMemoryPointer = { fg = colors.background, bg = colors.success, bold = true },
+		AsmDebugMemoryFramePointer = { fg = colors.background, bg = colors.warning, bold = true },
+		AsmDebugMemoryZero = { fg = colors.muted },
 		-- Rainbow: a stable color for each byte position (0–15).
 		AsmDebugMemoryByte1 = { fg = "#FF6B6B", bold = true },
 		AsmDebugMemoryByte2 = { fg = "#FF9F43", bold = true },
@@ -115,15 +116,15 @@ local function setup_highlights()
 		AsmDebugMemoryAscii14 = { fg = "#4ECDC4", bold = true },
 		AsmDebugMemoryAscii15 = { fg = "#45B7D1", bold = true },
 		AsmDebugMemoryAscii16 = { fg = "#5D8BF4", bold = true },
-		AsmDebugMnemonic = { fg = "#D6A6FF", bold = true },
-		AsmDebugOperandRegister = { fg = "#74D7F0", bold = true },
-		AsmDebugOperandNumber = { fg = "#FFB86C" },
-		AsmDebugOperandSymbol = { fg = "#A6E3A1", italic = true },
+		AsmDebugMnemonic = { fg = colors.primary, bold = true },
+		AsmDebugOperandRegister = { fg = colors.secondary, bold = true },
+		AsmDebugOperandNumber = { fg = colors.warning },
+		AsmDebugOperandSymbol = { fg = colors.success, italic = true },
 		AsmDebugOutput = { link = "Normal" },
 		AsmDebugMuted = { link = "Comment" },
 		AsmDebugError = { link = "DiagnosticError" },
-		AsmDebugBorder = { fg = "#CBA6F7" },
-		AsmDebugStatus = { fg = "#A6F7B2", bold = true },
+		AsmDebugBorder = { fg = colors.primary },
+		AsmDebugStatus = { fg = colors.secondary, bold = true },
 	}
 	for name, spec in pairs(palette) do
 		vim.api.nvim_set_hl(0, name, spec)
@@ -2401,8 +2402,9 @@ function M.open(executable)
 	S.instructions, S.regs, S.output = {}, {}, {}
 	S.pc, S.sp, S.fp = nil, nil, nil
 	S.source_line = nil
-	S.follow_pc = true
-	S.follow_memory = true
+	local debug_options = require("mivn.settings").plugin_options("asm_debug")
+	S.follow_pc = debug_options.follow_code ~= false
+	S.follow_memory = debug_options.follow_memory ~= false
 	S.stack_regions = {}
 	load_source_for_executable(executable)
 	S.started, S.running, S.finished, S.dap_launched = false, false, false, false
@@ -2516,6 +2518,12 @@ local function pick_executable()
 end
 
 function M.setup()
+	local settings_group = vim.api.nvim_create_augroup("AsmDebugSettings", { clear = true })
+	vim.api.nvim_create_autocmd("User", {
+		group = settings_group,
+		pattern = "MivnSettingsReloaded",
+		callback = setup_highlights,
+	})
 	vim.api.nvim_create_user_command("AsmDebug", function(opts)
 		M.open(opts.args)
 	end, {

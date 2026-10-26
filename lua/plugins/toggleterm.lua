@@ -1,18 +1,20 @@
 return {
 	"akinsho/toggleterm.nvim",
+	enabled = require("mivn.settings").plugin_enabled("toggleterm"),
 	priority = 50,
 	config = function()
+		local options = require("mivn.settings").plugin_options("toggleterm")
 		vim.opt.termguicolors = true
 
-		require("toggleterm").setup({
-			open_mapping = [[<leader>ot]],
-			insert_mappings = false,
-			direction = "float",
-			shade_terminals = false,
-			shell = vim.o.shell,
+		local setup = {
+			open_mapping = options.open_mapping or [[<leader>ot]],
+			insert_mappings = options.insert_mappings == true,
+			direction = options.direction or "float",
+			shade_terminals = options.shade_terminals == true,
+			shell = options.shell or vim.o.shell,
 			float_opts = {
-				border = "rounded",
-				winblend = 32,
+				border = options.border or "rounded",
+				winblend = options.winblend or 32,
 			},
 			on_open = function(term)
 				vim.api.nvim_set_option_value(
@@ -21,7 +23,15 @@ return {
 					{ win = term.window }
 				)
 			end,
-		})
+		}
+		setup = vim.tbl_deep_extend("force", setup, options.setup or {})
+		require("toggleterm").setup(setup)
+		if type(setup.open_mapping) == "string" then
+			vim.keymap.set("n", setup.open_mapping, "<cmd>ToggleTerm<cr>", {
+				desc = "Toggle terminal",
+				silent = true,
+			})
+		end
 
 		-- Terminal ANSI palette (Catppuccin Mocha).
 		vim.g.terminal_color_0 = "#45475A"
@@ -43,5 +53,6 @@ return {
 
 		vim.api.nvim_set_hl(0, "ToggleTermFloatBorder", { fg = "#CBA6F7", bold = true })
 		vim.api.nvim_set_hl(0, "ToggleTermNormalFloat", { bg = "NONE" })
+		require("mivn.theme").apply()
 	end,
 }

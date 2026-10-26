@@ -1,20 +1,30 @@
 local M = {}
 
-function M.expand(filetype, trigger)
-	local luasnip = require("luasnip")
-	local buf = vim.api.nvim_get_current_buf()
-	for _, snippet in ipairs(luasnip.get_snippets(filetype) or {}) do
-		if snippet.trigger == trigger then
-			vim.cmd("startinsert")
-			vim.schedule(function()
-				if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_get_current_buf() == buf then
-					luasnip.snip_expand(snippet)
-				end
-			end)
-			return
-		end
+local modules = {
+	asm = "snippets.asm",
+	c = "snippets.c",
+	cpp = "snippets.cpp",
+	python = "snippets.python",
+	sh = "snippets.sh",
+	bash = "snippets.sh",
+	lua = "snippets.lua",
+	javascript = "snippets.javascript",
+	javascriptreact = "snippets.javascript",
+	typescript = "snippets.typescript",
+	typescriptreact = "snippets.typescript",
+	html = "snippets.html",
+	css = "snippets.css",
+	json = "snippets.json",
+}
+
+function M.register(luasnip, priority)
+	priority = type(priority) == "number" and priority or 2000
+	for filetype, module in pairs(modules) do
+		luasnip.add_snippets(filetype, require(module), {
+			key = "mivn-" .. filetype,
+			default_priority = priority,
+		})
 	end
-	vim.notify(string.format("Snippet %q not found for %s", trigger, filetype), vim.log.levels.WARN)
 end
 
 return M

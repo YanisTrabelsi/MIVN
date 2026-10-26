@@ -26,6 +26,7 @@ for _, file in ipairs(vim.fn.readdir(autocmd_path)) do
 end
 
 -- Initialization
+require("mivn.keymaps").setup()
 require("lazy").setup("plugins") -- Load all files under ./lua/plugins.
 
 vim.diagnostic.config({

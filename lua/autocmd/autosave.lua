@@ -12,10 +12,15 @@ end
 
 local function delay()
 	local ok, settings = pcall(require, "mivn.settings")
-	return ok and settings.get().autosave_delay_ms or 200
+	return ok and settings.get().autosave.delay_ms or 200
 end
 
 local function schedule_save(buf)
+	local ok, settings = pcall(require, "mivn.settings")
+	if ok and not settings.get().autosave.enabled then
+		cleanup(buf)
+		return
+	end
 	if not vim.api.nvim_buf_is_valid(buf) then
 		cleanup(buf)
 		return
@@ -32,6 +37,10 @@ local function schedule_save(buf)
 			return
 		end
 		cleanup(buf)
+		local settings_ok, current_settings = pcall(require, "mivn.settings")
+		if settings_ok and not current_settings.get().autosave.enabled then
+			return
+		end
 		if not vim.api.nvim_buf_is_valid(buf) or not vim.bo[buf].modified then
 			return
 		end

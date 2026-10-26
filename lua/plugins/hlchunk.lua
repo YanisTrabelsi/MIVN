@@ -1,13 +1,16 @@
 return {
 	"shellRaining/hlchunk.nvim",
+	enabled = require("mivn.settings").plugin_enabled("hlchunk"),
 	event = "BufReadPre",
 	config = function()
-		require("hlchunk").setup({
+		local options = require("mivn.settings").plugin_options("hlchunk")
+		local colors = require("mivn.settings").get().theme.colors
+		local setup = {
 			chunk = {
-				enable = true,
+				enable = options.chunk ~= false,
 				style = {
-					{ fg = "#CBA6F7" }, -- Active chunk.
-					{ fg = "#F38BA8" }, -- Error.
+					{ fg = colors.primary }, -- Active chunk.
+					{ fg = options.error_color or colors.error }, -- Error.
 				},
 				chars = {
 					horizontal_line = "─",
@@ -17,26 +20,28 @@ return {
 					right_arrow = "─",
 				},
 				textobject = "",
-				max_file_size = 1024 * 1024,
+				max_file_size = options.max_file_size or 1024 * 1024,
 				error_sign = false,
 			},
 			indent = {
-				enable = true,
+				enable = options.indent ~= false,
 				style = {
-					{ fg = "#313244" },
-					{ fg = "#3b3a52" },
-					{ fg = "#45455a" },
+					{ fg = options.indent_colors and options.indent_colors[1] or "#313244" },
+					{ fg = options.indent_colors and options.indent_colors[2] or "#3b3a52" },
+					{ fg = options.indent_colors and options.indent_colors[3] or "#45455a" },
 				},
 				chars = { "│" },
 			},
 			line_num = {
-				enable = true,
-				style = "#CBA6F7",
+				enable = options.line_num ~= false,
+				style = colors.primary,
 			},
 			blank = {
-				enable = false,
+				enable = options.blank == true,
 			},
-		})
+		}
+		setup = vim.tbl_deep_extend("force", setup, options.setup or {})
+		require("hlchunk").setup(setup)
 
 		-- Exclude selected filetypes.
 		vim.api.nvim_create_autocmd("FileType", {

@@ -8,6 +8,16 @@ A Neovim configuration with a customizable dashboard, language tools, and assemb
 |-----------|-----------|------------------------------------|
 | Primary   | `#CBA6F7` | Borders, icons, highlights (default) |
 | Secondary | `#A6F7B2` | Search, keybinds, active elements (default) |
+| Text      | `#CDD6F4` | Main UI labels |
+| Muted     | `#6C7086` | Secondary labels |
+| Surface   | `#313244` | Opaque floating windows |
+| Error     | `#F38BA8` | Errors and command status |
+| Warning   | `#F9E2AF` | Warnings and changed values |
+| Success   | `#A6E3A1` | Success state |
+| Info      | `#89B4FA` | Informational labels |
+| Visual    | `#FAB387` | Visual mode status |
+
+Edit these roles under `theme.colors` in [lua/mivn/user_config.lua](lua/mivn/user_config.lua). The dashboard title has a slow, soft glow; set `dashboard.animation.enabled = false` to turn it off.
 
 ## Plugins
 
@@ -34,7 +44,7 @@ A Neovim configuration with a customizable dashboard, language tools, and assemb
 
 ### LSP
 - **nvim-lspconfig** + **mason.nvim** — LSP management; Mason installs Pyright, Bash Language Server, Lua Language Server, and Clangd on supported platforms
-- **nvim-cmp** — Autocompletion with LuaSnip snippets
+- **nvim-cmp** — Autocompletion; LuaSnip and Friendly Snippets can be toggled separately
 - **asm-lsp** — Assembly instruction completion, hover documentation, and operand signature help; enabled when installed on `PATH`
 
 ### Debugging
@@ -52,7 +62,8 @@ instruction_set = "arm64"
 - **auto-session** — Automatic session save per directory, with manual restore
 
 ### Personalization
-- Open **Personalize MIVN** from the dashboard, or press `<leader>os`, to change the Catppuccin flavor, accent colors, dashboard layout and language, subtle dashboard animation, enabled language servers, and auto-save delay. Settings persist between launches. Neovim's native notification display remains enabled.
+- Open **Edit MIVN settings** from the dashboard, press `<leader>os`, or run `:MivnSettings`. It opens [lua/mivn/user_config.lua](lua/mivn/user_config.lua), a normal Lua file with editable values and comments. Save it to reload appearance, dashboard, auto-save, and LSP language enablement. Plugin on/off switches and setup options require restarting Neovim.
+- Each entry under `plugins` can be set to `false` to disable that plugin, or `true` to re-enable it. Related settings are grouped under `plugin_options` (Catppuccin, WhichKey, Telescope, Oil, ToggleTerm, Treesitter, completion, formatters, linters, LSP servers, sessions, Noice and more). Plugin options include common settings and an advanced `setup` table for the plugin's native configuration; LSP servers have their own options. The ASM debugger needs Telescope for its executable picker, so it is automatically disabled while Telescope is off. Set `theme.transparent_floats` or `theme.transparent_background` to `false` only if you want opaque windows; both are transparent by default. Neovim's native notifications remain enabled by default.
 
 ## Keybinds
 
@@ -67,6 +78,9 @@ Leader key: `<Space>`
 | `<leader>fb`       | Buffers      |
 | `<leader>fr`       | Recent files |
 | `<leader>fh`       | Help tags    |
+| `<leader>gf`       | Git files    |
+| `<leader>gs`       | Git status   |
+| `<leader>gc`       | Git commits  |
 
 ### Buffer
 | Keybind      | Action          |
@@ -75,6 +89,37 @@ Leader key: `<Space>`
 | `<leader>bn` | Next buffer     |
 | `<leader>bp` | Previous buffer |
 
+### Language tools
+
+| Keybind | Action |
+|---------|--------|
+| `<leader>lg` | Go to definition |
+| `<leader>lR` | Find references |
+| `<leader>li` | Go to implementation |
+| `<leader>lt` | Go to type definition |
+| `<leader>lh` | Show hover documentation |
+| `<leader>lr` | Rename symbol |
+| `<leader>la` | Code action |
+| `<leader>ld` | List diagnostics |
+| `<leader>lf` | Format buffer |
+
+### Open, tools, and sessions
+
+| Keybind | Action |
+|---------|--------|
+| `<leader>os` | Edit MIVN settings |
+| `<leader>oc` | Edit `init.lua` |
+| `<leader>od` | Open dashboard |
+| `<leader>of` | Open Oil file explorer |
+| `<leader>ot` | Toggle terminal |
+| `<leader>ss` | Save session |
+| `<leader>sr` | Restore session |
+| `<leader>sf` | Find session |
+| `<leader>u` | Toggle undo history |
+| `<leader>ad` | Pick an executable for the ASM debugger |
+
+Plugin-related mappings appear in WhichKey only while that plugin is enabled; turning off WhichKey itself does not remove the mappings.
+
 ### Window
 | Keybind      | Action             |
 |--------------|--------------------|
@@ -82,6 +127,8 @@ Leader key: `<Space>`
 | `<leader>ws` | Split horizontal   |
 | `<leader>wq` | Close window       |
 | `<leader>ww` | Save               |
+| `<leader>wh` / `<leader>wl` | Focus left / right window |
+| `<leader>wj` / `<leader>wk` | Focus lower / upper window |
 | `<leader>we` | Equalize windows   |
 | `<leader>w+` | Increase height    |
 | `<leader>w-` | Decrease height    |
@@ -157,13 +204,7 @@ Input detection covers `read` and `readv` system calls with file descriptor 0 in
 
 ### Snippets
 
-Type a trigger in insert mode and press `<Tab>` to expand it. Within a snippet, `<Tab>` moves to the next field and `<S-Tab>` moves to the previous field. Press `<leader>n` to open the WhichKey snippet groups and expand one directly; choose Assembly, Python, or C.
-
-| Language | Triggers |
-|----------|----------|
-| Assembly | `main`, `func`, `rodata` |
-| Python   | `main`, `def`, `class`, `for` |
-| C        | `main`, `func`, `for` |
+Type a trigger in Insert mode and press `<Tab>` to expand it, like VS Code. `<Tab>` and `<S-Tab>` move through snippet fields; snippets are not launched from WhichKey. There are now more than 100 triggers across Assembly, C, C++, Python, Bash, Lua, JavaScript, TypeScript, HTML, CSS and JSON. Examples include `main`, `arm64_func`, `syscall`, `pytest`, `dataclass`, `class`, `async`, `component`, `html5`, `section`, `transition`, `flex` and `obj`. Snippet definitions live in `lua/snippets/`, one file per language; `lua/snippets/init.lua` registers their filetypes.
 
 ## Structure
 
@@ -190,6 +231,7 @@ Type a trigger in insert mode and press `<Tab>` to expand it. Within a snippet, 
 │   │   ├── autopairs.lua
 │   │   ├── catppuccin.lua
 │   │   ├── conform.lua
+│   │   ├── completion.lua
 │   │   ├── dashboard.lua
 │   │   ├── hlchunk.lua
 │   │   ├── lsp.lua
@@ -203,14 +245,25 @@ Type a trigger in insert mode and press `<Tab>` to expand it. Within a snippet, 
 │   │   ├── whichkey.lua
 │   │   └── undotree.lua
 │   ├── mivn/
+│   │   ├── README.md
 │   │   ├── dashboard.lua
+│   │   ├── keymaps.lua
 │   │   ├── settings.lua
+│   │   ├── user_config.lua
 │   │   └── theme.lua
 │   ├── snippets/
 │   │   ├── asm.lua
 │   │   ├── c.lua
+│   │   ├── cpp.lua
+│   │   ├── css.lua
+│   │   ├── html.lua
 │   │   ├── init.lua
-│   │   └── python.lua
+│   │   ├── javascript.lua
+│   │   ├── json.lua
+│   │   ├── lua.lua
+│   │   ├── python.lua
+│   │   ├── sh.lua
+│   │   └── typescript.lua
 │   ├── statuscolumn.lua
 │   ├── statusline.lua
 │   └── tabline.lua

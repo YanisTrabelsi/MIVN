@@ -4,7 +4,7 @@ local function update_cursor_color()
 		return
 	end
 	local ok, settings = pcall(require, "mivn.settings")
-	local color = ok and settings.palette().primary or "#CBA6F7"
+	local color = ok and settings.get().theme.colors.primary or "#CBA6F7"
 	io.write("\27]12;" .. color .. "\7")
 	io.flush()
 end
@@ -13,6 +13,6 @@ local group = vim.api.nvim_create_augroup("MivnCursorColor", { clear = true })
 vim.api.nvim_create_autocmd("VimEnter", { group = group, callback = update_cursor_color })
 vim.api.nvim_create_autocmd("User", {
 	group = group,
-	pattern = "MivnSettingsChanged",
+	pattern = "MivnSettingsReloaded",
 	callback = update_cursor_color,
 })

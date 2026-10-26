@@ -1,5 +1,6 @@
 return {
 	"mbbill/undotree",
+	enabled = require("mivn.settings").plugin_enabled("undotree"),
 	config = function()
 		local undodir = vim.fn.stdpath("data") .. "/undodir"
 		if vim.fn.isdirectory(undodir) == 0 then
