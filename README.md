@@ -224,6 +224,7 @@ Type a trigger in Insert mode and press `<Tab>` to expand it, like VS Code. `<Ta
 │   ├── autocmd/
 │   │   ├── autosave.lua
 │   │   ├── cursor.lua
+│   │   ├── status.lua
 │   │   └── tabline.lua
 │   ├── plugins/
 │   │   ├── asm-debug.lua

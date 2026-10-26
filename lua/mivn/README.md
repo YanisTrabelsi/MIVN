@@ -8,6 +8,7 @@ Start with [`user_config.lua`](user_config.lua). It is the only settings file mo
 | `theme.lua` | Applies colors, transparency, and Catppuccin options. |
 | `dashboard.lua` | Builds the dashboard and its slow title glow. |
 | `keymaps.lua` | Defines normal editor shortcuts independently from WhichKey. |
+| `../autocmd/status.lua` | Restores MIVN's status line and number column when leaving the dashboard. |
 | `../plugins/*.lua` | One Lazy.nvim specification per plugin; reads enable switches and options from `user_config.lua`. |
 | `../snippets/*.lua` | One LuaSnip collection per language. |
 

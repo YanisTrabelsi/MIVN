@@ -83,7 +83,11 @@ return {
 			follow_code = true, -- keep the current instruction in view after each pause
 			follow_memory = true, -- keep the stack dump centered around SP
 		},
-		dashboard = { setup = {} }, -- advanced dashboard-nvim options
+		dashboard = {
+			setup = {
+				hide = { statusline = false }, -- keep the status bar visible on the dashboard
+			},
+		},
 		catppuccin = {
 			term_colors = true,
 			integrations = { which_key = false },
