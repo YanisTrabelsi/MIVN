@@ -20,23 +20,7 @@ return {
 			},
 		})
 
-		local function set_wk_highlights()
-			vim.api.nvim_set_hl(0, "WhichKeyBorder", { fg = "#CBA6F7" })
-			vim.api.nvim_set_hl(0, "WhichKeyTitle", { fg = "#CBA6F7", bold = true })
-			vim.api.nvim_set_hl(0, "WhichKeyNormal", { bg = "NONE" })
-			vim.api.nvim_set_hl(0, "WhichKey", { fg = "#A6F7B2", bold = true })
-			vim.api.nvim_set_hl(0, "WhichKeyDesc", { fg = "#CDD6F4" })
-			vim.api.nvim_set_hl(0, "WhichKeyGroup", { fg = "#FAB387", bold = true })
-			vim.api.nvim_set_hl(0, "WhichKeySeparator", { fg = "#6C7086" })
-			vim.api.nvim_set_hl(0, "WhichKeyFloat", { bg = "NONE" })
-			vim.api.nvim_set_hl(0, "NormalFloat", { bg = "NONE" })
-		end
-
-		set_wk_highlights()
-
-		vim.api.nvim_create_autocmd("ColorScheme", {
-			callback = set_wk_highlights,
-		})
+		require("mivn.theme").apply()
 		wk.add({
 			-- Files
 			{ "<leader>f", group = "find" },
@@ -119,6 +103,7 @@ return {
 				end,
 				desc = "Config Neovim",
 			},
+			{ "<leader>os", function() require("mivn.settings").open() end, desc = "Personalize MIVN" },
 
 			-- Tabs
 			{ "<leader>t", group = "tab" },

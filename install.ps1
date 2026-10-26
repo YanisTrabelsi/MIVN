@@ -4,6 +4,7 @@ $Repo   = "YanisTrabelsi/MIVN"
 $Branch = "main"
 $Target = Join-Path $env:LOCALAPPDATA "nvim"
 $TmpDir = Join-Path $env:TEMP ("mivn_" + [System.Guid]::NewGuid().ToString())
+$Backup = $null
 
 New-Item -ItemType Directory -Path $TmpDir | Out-Null
 
@@ -30,6 +31,15 @@ try {
 
     Write-Host "==> MIVN installed to $Target"
     Write-Host "==> Launch 'nvim' to let lazy.nvim install the plugins."
+}
+catch {
+    if ($Backup -and (Test-Path $Backup)) {
+        if (Test-Path $Target) {
+            Remove-Item -Path $Target -Recurse -Force
+        }
+        Move-Item -Path $Backup -Destination $Target
+    }
+    throw
 }
 finally {
     Remove-Item -Path $TmpDir -Recurse -Force -ErrorAction SilentlyContinue

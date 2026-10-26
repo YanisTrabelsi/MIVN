@@ -11,14 +11,24 @@ return {
 
 			local uname = vim.loop.os_uname()
 			local is_linux_aarch64 = uname.sysname == "Linux" and uname.machine == "aarch64"
+			local preferences = require("mivn.settings").get().languages
 
-			local ensure_installed = { "pyright", "bashls", "lua_ls" }
-			if not is_linux_aarch64 then
-				table.insert(ensure_installed, "clangd")
+			local servers = {
+				{ id = "clangd", setting = "c" },
+				{ id = "pyright", setting = "python" },
+				{ id = "bashls", setting = "bash" },
+				{ id = "lua_ls", setting = "lua" },
+			}
+			local ensure_installed = {}
+			for _, server in ipairs(servers) do
+				if server.id ~= "clangd" or not is_linux_aarch64 then
+					table.insert(ensure_installed, server.id)
+				end
 			end
 
 			require("mason-lspconfig").setup({
 				ensure_installed = ensure_installed,
+				automatic_enable = false,
 			})
 
 			vim.lsp.config("*", {
@@ -26,14 +36,8 @@ return {
 			})
 
 			vim.lsp.config("clangd", {})
-			vim.lsp.enable("clangd")
-
 			vim.lsp.config("pyright", {})
-			vim.lsp.enable("pyright")
-
 			vim.lsp.config("bashls", {})
-			vim.lsp.enable("bashls")
-
 			vim.lsp.config("lua_ls", {
 				settings = {
 					Lua = {
@@ -43,7 +47,11 @@ return {
 					},
 				},
 			})
-			vim.lsp.enable("lua_ls")
+			for _, server in ipairs(servers) do
+				if server.id ~= "clangd" or not is_linux_aarch64 or vim.fn.executable("clangd") == 1 then
+					vim.lsp.enable(server.id, preferences[server.setting])
+				end
+			end
 
 			local asm_lsp = vim.fn.exepath("asm-lsp")
 			if asm_lsp ~= "" then
@@ -55,8 +63,9 @@ return {
 						on_dir(root or vim.fs.dirname(filename))
 					end,
 				})
-				vim.lsp.enable("asm_lsp")
+				vim.lsp.enable("asm_lsp", preferences.assembly)
 			end
+			vim.g.mivn_lsp_ready = true
 		end,
 	},
 	{
@@ -69,8 +78,7 @@ return {
 			"rafamadriz/friendly-snippets",
 		},
 		config = function()
-			vim.api.nvim_set_hl(0, "CmpBorder", { fg = "#CBA6F7" })
-			vim.api.nvim_set_hl(0, "CmpDocBorder", { fg = "#CBA6F7" })
+			require("mivn.theme").apply()
 
 			require("luasnip.loaders.from_vscode").lazy_load()
 

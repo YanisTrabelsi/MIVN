@@ -2,13 +2,14 @@ return {
 	"catppuccin/nvim",
 	name = "catppuccin",
 	config = function()
+		local settings = require("mivn.settings").get()
 		require("catppuccin").setup({
 			transparent_background = true,
 			integrations = {
 				which_key = false,
 			},
 			term_colors = true,
-			flavour = "mocha", -- latte, frappe, macchiato, mocha
+			flavour = settings.flavour,
 
 			-- Override global colors.
 			color_overrides = {
@@ -65,14 +66,6 @@ return {
 		})
 
 		vim.cmd("colorscheme catppuccin")
-		vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", { fg = "#CBA6F7" })
-		vim.api.nvim_set_hl(0, "NoiceCmdlinePopupTitle", { fg = "#CBA6F7" })
-		vim.api.nvim_set_hl(0, "NoiceCmdlineIcon", { fg = "#A6F7B2" })
-		vim.api.nvim_set_hl(0, "NoiceCmdlinePopup", { fg = "#A6F7B2" })
-		vim.api.nvim_set_hl(0, "NoicePopup", { fg = "#A6F7B2" })
-		vim.api.nvim_set_hl(0, "CmpItemAbbr", { fg = "#FFFFFF" })
-		vim.api.nvim_set_hl(0, "CmpItemAbbrMatch", { fg = "#A6F7B2", bold = true })
-		vim.api.nvim_set_hl(0, "CmpItemKind", { fg = "#CBA6F7" })
-		vim.api.nvim_set_hl(0, "CmpItemMenu", { fg = "#CBA6F7" })
+		require("mivn.theme").apply()
 	end,
 }

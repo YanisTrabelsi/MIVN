@@ -7,6 +7,7 @@ return {
 	config = function()
 		require("noice").setup({
 			notify = {
+				-- Keep vim.notify and Neovim's native message display untouched.
 				enabled = false,
 			},
 			cmdline = {

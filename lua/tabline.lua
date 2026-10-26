@@ -53,33 +53,4 @@ _G.MIVNTabline = tabline
 vim.o.showtabline = 1
 vim.o.tabline = "%!v:lua.MIVNTabline()"
 
-vim.api.nvim_set_hl(0, "MIVNTabActive", {
-    fg = "#A6F7B2",
-    bg = "NONE",
-    bold = true,
-})
-
-vim.api.nvim_set_hl(0, "MIVNTabCorner", {
-    fg = "#CBA6F7",
-    bg = "NONE",
-    bold = true,
-})
-
-vim.api.nvim_set_hl(0, "MIVNTabInactive", {
-    fg = "#A6F7B2",
-    bg = "NONE",
-})
-
-vim.api.nvim_set_hl(0, "MIVNTabModified", {
-    fg = "#A6F7B2",
-    bg = "NONE",
-})
-
-vim.api.nvim_set_hl(0, "MIVNTabSeparator", {
-    fg = "#45475A",
-    bg = "NONE",
-})
-
-vim.api.nvim_set_hl(0, "MIVNTabFill", {
-    bg = "NONE",
-})
+require("mivn.theme").apply()

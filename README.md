@@ -1,13 +1,13 @@
 # MIVN — Neovim Config
 
-A minimal, aesthetic Neovim configuration built around a dark purple/green color palette.
+A Neovim configuration with a customizable dashboard, language tools, and assembly debugger.
 
 ## Color Palette
 
 | Role      | Hex       | Usage                              |
 |-----------|-----------|------------------------------------|
-| Primary   | `#CBA6F7` | Borders, icons, highlights         |
-| Secondary | `#A6F7B2` | Search, keybinds, active elements  |
+| Primary   | `#CBA6F7` | Borders, icons, highlights (default) |
+| Secondary | `#A6F7B2` | Search, keybinds, active elements (default) |
 
 ## Plugins
 
@@ -30,7 +30,7 @@ A minimal, aesthetic Neovim configuration built around a dark purple/green color
 - **undotree** — Visual undo history (`<leader>u`)
 - **conform.nvim** — Format Python with Ruff on save
 - **nvim-lint** — Lint Python with Flake8
-- **Auto-save** — Debounced saves after Normal mode edits and when leaving Insert mode
+- **Auto-save** — Saves edits after a short delay outside Insert mode and on leaving Insert mode; formatters run only on save
 
 ### LSP
 - **nvim-lspconfig** + **mason.nvim** — LSP management; Mason installs Pyright, Bash Language Server, Lua Language Server, and Clangd on supported platforms
@@ -49,7 +49,10 @@ instruction_set = "arm64"
 ```
 
 ### Session
-- **auto-session** — Automatic session save/restore per directory
+- **auto-session** — Automatic session save per directory, with manual restore
+
+### Personalization
+- Open **Personalize MIVN** from the dashboard, or press `<leader>os`, to change the Catppuccin flavor, accent colors, dashboard layout and language, subtle dashboard animation, enabled language servers, and auto-save delay. Settings persist between launches. Neovim's native notification display remains enabled.
 
 ## Keybinds
 
@@ -108,6 +111,7 @@ Leader key: `<Space>`
 | `<leader>of` | File explorer, floating (Oil)  |
 | `<leader>ol` | Lazy                           |
 | `<leader>oc` | Edit Neovim config              |
+| `<leader>os` | Personalize MIVN                 |
 
 ### Tab
 | Keybind      | Action        |
@@ -178,7 +182,8 @@ Type a trigger in insert mode and press `<Tab>` to expand it. Within a snippet, 
 │   ├── asm_indent.lua
 │   ├── autocmd/
 │   │   ├── autosave.lua
-│   │   └── cursor.lua
+│   │   ├── cursor.lua
+│   │   └── tabline.lua
 │   ├── plugins/
 │   │   ├── asm-debug.lua
 │   │   ├── auto-session.lua
@@ -197,6 +202,10 @@ Type a trigger in insert mode and press `<Tab>` to expand it. Within a snippet, 
 │   │   ├── treesitter.lua
 │   │   ├── whichkey.lua
 │   │   └── undotree.lua
+│   ├── mivn/
+│   │   ├── dashboard.lua
+│   │   ├── settings.lua
+│   │   └── theme.lua
 │   ├── snippets/
 │   │   ├── asm.lua
 │   │   ├── c.lua

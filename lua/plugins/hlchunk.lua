@@ -40,6 +40,7 @@ return {
 
 		-- Exclude selected filetypes.
 		vim.api.nvim_create_autocmd("FileType", {
+			group = vim.api.nvim_create_augroup("MivnHlchunkFiletypes", { clear = true }),
 			pattern = {
 				"dashboard",
 				"alpha",

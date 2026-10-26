@@ -19,20 +19,7 @@ local mode_colors = {
 	["R"] = "%#StatusReplace#",
 }
 
-local function set_highlights()
-	vim.api.nvim_set_hl(0, "StatusNormal",  { fg = "#1E1E2E", bg = "#CBA6F7", bold = true })
-	vim.api.nvim_set_hl(0, "StatusInsert",  { fg = "#1E1E2E", bg = "#A6E3A1", bold = true })
-	vim.api.nvim_set_hl(0, "StatusVisual",  { fg = "#1E1E2E", bg = "#FAB387", bold = true })
-	vim.api.nvim_set_hl(0, "StatusCommand", { fg = "#1E1E2E", bg = "#F38BA8", bold = true })
-	vim.api.nvim_set_hl(0, "StatusReplace", { fg = "#1E1E2E", bg = "#F38BA8", bold = true })
-	vim.api.nvim_set_hl(0, "StatusLine",    { fg = "#CDD6F4", bg = "" })
-end
-
-set_highlights()
-vim.api.nvim_create_autocmd("ColorScheme", {
-	group = vim.api.nvim_create_augroup("MivnStatuslineHighlights", { clear = true }),
-	callback = set_highlights,
-})
+require("mivn.theme").apply()
 
 M.render = function()
 

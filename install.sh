@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -euo pipefail
 
 REPO="YanisTrabelsi/MIVN"
@@ -8,8 +9,9 @@ BACKUP=""
 
 cleanup() {
 	local exit_code=$?
-	if [ "${exit_code}" -ne 0 ] && [ -n "${BACKUP}" ] && [ ! -e "${TARGET}" ] && [ -e "${BACKUP}" ]; then
+	if [ "${exit_code}" -ne 0 ] && [ -n "${BACKUP}" ] && [ -e "${BACKUP}" ]; then
 		echo "==> Installation failed; restoring ${BACKUP}"
+		rm -rf "${TARGET}"
 		mv "${BACKUP}" "${TARGET}"
 	fi
 	rm -rf "${TMP_DIR}"
