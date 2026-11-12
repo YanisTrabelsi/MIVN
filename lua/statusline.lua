@@ -44,13 +44,15 @@ M.render = function()
 	local fixed_width = vim.fn.strdisplaywidth(mode_part)
 		+ vim.fn.strdisplaywidth(" " .. file_name .. modified .. " ")
 		+ vim.fn.strdisplaywidth(position_part)
-	local history, history_width = require("mivn.key_history").render(math.max(vim.o.columns - fixed_width - 2, 0))
-	local right_part = position_part .. (history ~= "" and (" " .. history .. " ") or "")
+	local history, history_width = require("mivn.key_history").render(math.max(vim.o.columns - fixed_width - 1, 0))
+	local right_part = history ~= ""
+		and (history .. " %#StatusLine#" .. position_part)
+		or position_part
 
 	local filler = vim.o.columns
 		- fixed_width
 		- history_width
-		- (history ~= "" and 2 or 0)
+		- (history ~= "" and 1 or 0)
 
 	return mode_hl .. mode_part
 		.. "%#StatusLine#" .. file_part
