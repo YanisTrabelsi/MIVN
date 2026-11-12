@@ -1,6 +1,6 @@
 # MIVN — Neovim Config
 
-A Neovim configuration with a customizable dashboard, language tools, and assembly debugger.
+A Neovim configuration with a customizable dashboard and language tools.
 
 ## Color Palette
 
@@ -47,9 +47,6 @@ Edit these roles under `theme.colors` in [lua/mivn/user_config.lua](lua/mivn/use
 - **nvim-cmp** — Autocompletion; LuaSnip and Friendly Snippets can be toggled separately
 - **asm-lsp** — Assembly instruction completion, hover documentation, and operand signature help; enabled when installed on `PATH`
 
-### Debugging
-- **MIVN ASM debugger** — Debug native Mach-O binaries with LLDB-DAP on macOS and ELF binaries with GDB on Linux
-
 For Assembly files, completion appears while typing or can be opened with `<C-Space>`. Use `K` over an instruction for its documentation and `<C-k>` in insert mode for operand signature help. Assembly indentation keeps labels and directives at column zero and indents instructions beneath labels by four spaces. `asm-lsp` defaults to x86/x86-64; set the architecture and assembler for a project in its `.asm-lsp.toml` file when using another target. For example, ARM64 GAS projects can use:
 
 ```toml
@@ -63,144 +60,39 @@ instruction_set = "arm64"
 
 ### Personalization
 - Open **Edit MIVN settings** from the dashboard, press `<leader>os`, or run `:MivnSettings`. It opens [lua/mivn/user_config.lua](lua/mivn/user_config.lua), a normal Lua file with editable values and comments. Save it to reload appearance, dashboard, auto-save, and LSP language enablement. Plugin on/off switches and setup options require restarting Neovim.
-- Each entry under `plugins` can be set to `false` to disable that plugin, or `true` to re-enable it. Related settings are grouped under `plugin_options` (Catppuccin, WhichKey, Telescope, Oil, ToggleTerm, Treesitter, completion, formatters, linters, LSP servers, sessions, Noice and more). Plugin options include common settings and an advanced `setup` table for the plugin's native configuration; LSP servers have their own options. The ASM debugger needs Telescope for its executable picker, so it is automatically disabled while Telescope is off. Set `theme.transparent_floats` or `theme.transparent_background` to `false` only if you want opaque windows; both are transparent by default. Neovim's native notifications remain enabled by default.
+- Each entry under `plugins` can be set to `false` to disable that plugin, or `true` to re-enable it. Related settings are grouped under `plugin_options` (Catppuccin, WhichKey, Telescope, Oil, ToggleTerm, Treesitter, completion, formatters, linters, LSP servers, sessions, Noice and more). Plugin options include common settings and an advanced `setup` table for the plugin's native configuration; LSP servers have their own options. Set `theme.transparent_floats` or `theme.transparent_background` to `false` only if you want opaque windows; both are transparent by default. Neovim's native notifications remain enabled by default.
+- Files changed outside Neovim are reloaded automatically when their buffers have no unsaved local edits. MIVN auto-saves edits outside Insert mode, so configuration files update without a write confirmation prompt.
 
 ## Keybinds
 
 Leader key: `<Space>`
 
-### Find
-| Keybind            | Action       |
-|--------------------|--------------|
-| `<leader><leader>` | Find files   |
-| `<leader>ff`       | Find files   |
-| `<leader>fg`       | Live grep    |
-| `<leader>fb`       | Buffers      |
-| `<leader>fr`       | Recent files |
-| `<leader>fh`       | Help tags    |
-| `<leader>gf`       | Git files    |
-| `<leader>gs`       | Git status   |
-| `<leader>gc`       | Git commits  |
+| Key | Action |
+|---|---|
+| `<leader><leader>` / `<leader>ff` | Find files |
+| `<leader>fr` / `<leader>fg` / `<leader>fh` | Recent files / search in files / help tags |
+| `<leader>fb` / `<leader>bb` | Open buffers / choose a buffer |
+| `<leader>gf` / `<leader>gs` / `<leader>gc` | Git files / status / commits |
+| `<leader>bd` / `<leader>bn` / `<leader>bp` | Delete / next / previous buffer |
+| `<leader>os` / `<leader>oc` / `<leader>od` | MIVN settings / `init.lua` / dashboard |
+| `<leader>of` / `<leader>ot` | File explorer / terminal |
+| `<leader>wh` / `wj` / `wk` / `wl` | Focus left / down / up / right window |
+| `<leader>wH` / `wJ` / `wK` / `wL` | Move window to left / bottom / top / right edge |
+| `<leader>w+` / `w-` | Increase / decrease window height |
+| `<leader>w>` / `w<` | Increase / decrease window width |
+| `<leader>w=` | Equalize window sizes |
+| `<leader>wv` / `ws` / `wq` | Split vertically / horizontally / close window |
+| `<leader>to` / `tc` | Open / close tab |
+| `<leader>tn` / `tp` / `tf` / `tl` | Next / previous / first / last tab |
+| `<leader>t>` / `t<` | Move tab right / left |
+| `<leader>ww` | Save current buffer |
+| `<leader>qq` | Quit Neovim |
+| `<leader>ss` / `sr` / `sf` | Save / restore / find session |
+| `<leader>lg` / `lR` / `li` / `lt` | Definition / references / implementation / type definition |
+| `<leader>lh` / `lr` / `la` / `ld` / `ln` / `lp` / `lf` | Hover / rename / code action / diagnostic list / next / previous / format |
+| `K` (ASM) / `<C-k>` in Insert mode | Instruction docs / operand help |
 
-### Buffer
-| Keybind      | Action          |
-|--------------|-----------------|
-| `<leader>bd` | Delete buffer   |
-| `<leader>bn` | Next buffer     |
-| `<leader>bp` | Previous buffer |
-
-### Language tools
-
-| Keybind | Action |
-|---------|--------|
-| `<leader>lg` | Go to definition |
-| `<leader>lR` | Find references |
-| `<leader>li` | Go to implementation |
-| `<leader>lt` | Go to type definition |
-| `<leader>lh` | Show hover documentation |
-| `<leader>lr` | Rename symbol |
-| `<leader>la` | Code action |
-| `<leader>ld` | List diagnostics |
-| `<leader>lf` | Format buffer |
-
-### Open, tools, and sessions
-
-| Keybind | Action |
-|---------|--------|
-| `<leader>os` | Edit MIVN settings |
-| `<leader>oc` | Edit `init.lua` |
-| `<leader>od` | Open dashboard |
-| `<leader>of` | Open Oil file explorer |
-| `<leader>ot` | Toggle terminal |
-| `<leader>ss` | Save session |
-| `<leader>sr` | Restore session |
-| `<leader>sf` | Find session |
-| `<leader>u` | Toggle undo history |
-| `<leader>ad` | Pick an executable for the ASM debugger |
-
-Plugin-related mappings appear in WhichKey only while that plugin is enabled; turning off WhichKey itself does not remove the mappings.
-
-### Window
-| Keybind      | Action             |
-|--------------|--------------------|
-| `<leader>wv` | Split vertical     |
-| `<leader>ws` | Split horizontal   |
-| `<leader>wq` | Close window       |
-| `<leader>ww` | Save               |
-| `<leader>wh` / `<leader>wl` | Focus left / right window |
-| `<leader>wj` / `<leader>wk` | Focus lower / upper window |
-| `<leader>we` | Equalize windows   |
-| `<leader>w+` | Increase height    |
-| `<leader>w-` | Decrease height    |
-| `<leader>w>` | Increase width     |
-| `<leader>w<` | Decrease width     |
-| `<leader>wh` | Focus window left  |
-| `<leader>wj` | Focus window down  |
-| `<leader>wk` | Focus window up    |
-| `<leader>wl` | Focus window right |
-| `<leader>wH` | Move window left   |
-| `<leader>wJ` | Move window down   |
-| `<leader>wK` | Move window up     |
-| `<leader>wL` | Move window right  |
-
-### Git
-| Keybind      | Action       |
-|--------------|--------------|
-| `<leader>gs` | Git status   |
-| `<leader>gc` | Git commits  |
-| `<leader>gb` | Git branches |
-
-### Open
-| Keybind      | Action                        |
-|--------------|--------------------------------|
-| `<leader>ot` | Toggle floating terminal       |
-| `<leader>oe` | File explorer (Oil)            |
-| `<leader>of` | File explorer, floating (Oil)  |
-| `<leader>ol` | Lazy                           |
-| `<leader>oc` | Edit Neovim config              |
-| `<leader>os` | Personalize MIVN                 |
-
-### Tab
-| Keybind      | Action        |
-|--------------|---------------|
-| `<leader>to` | New tab       |
-| `<leader>tc` | Close tab     |
-| `<leader>tn` | Next tab      |
-| `<leader>tp` | Previous tab  |
-| `<leader>tf` | First tab     |
-| `<leader>tl` | Last tab      |
-| `<leader>tm` | Move tab      |
-
-### Session
-| Keybind      | Action               |
-|--------------|----------------------|
-| `<leader>ss` | Save session         |
-| `<leader>sr` | Restore session      |
-| `<leader>se` | Enable auto-session  |
-| `<leader>sd` | Disable auto-session |
-| `<leader>sD` | Delete session       |
-| `<leader>st` | Toggle auto-session  |
-
-### Misc
-| Keybind      | Action                |
-|--------------|------------------------|
-| `<leader>u`  | Toggle undotree        |
-| `<leader>q`  | Quit all               |
-| `<leader>=`  | Format file            |
-| `<leader>ad` | Pick an executable in the current directory for ASM debugging |
-| `I` (ASM debugger) | Open the program input prompt manually |
-| `c` / `s` / `n` (ASM debugger) | Continue / step into / step over one instruction |
-| `p` / `r` (ASM debugger) | Pause / restart |
-| `a` / `v` (ASM debugger) | Focus assembly / source |
-| `R` / `m` (ASM debugger) | Focus registers / memory |
-| `j` / `k` / `<C-d>` / `<C-u>` (ASM debugger) | Scroll the focused panel; scrolling code or memory pauses auto-follow |
-| `f` / `F` (ASM debugger) | Toggle code following / memory following |
-| `K` (ASM)    | Show instruction documentation |
-| `<C-k>` (ASM, insert mode) | Show operand signature help |
-
-The ASM debugger keeps its program terminal hidden until it detects a read from stdin. When the input window appears, type a line and press `<Enter>`; the window closes and execution resumes. Program output from the hidden terminal is copied into the **PROGRAM OUTPUT** panel. Press `I` in a debugger panel to open the input terminal manually. In the debugger, use `a`/`v` to focus code, `R` for registers, and `m` for the memory dump. `j`/`k` and `<C-d>`/`<C-u>` scroll the focused panel. Scrolling assembly or source turns off automatic PC following so each refresh does not jump back; `f` toggles it. Scrolling memory pauses its automatic SP tracking; `F` toggles that tracking. Register and memory values refresh whenever execution stops after a step, breakpoint, or signal. GDB's complete register list is shown, including architecture-specific and SIMD registers, and can be scrolled in the register panel.
-
-Input detection covers `read` and `readv` system calls with file descriptor 0 in GDB, falling back to common libc read functions when syscall catchpoints are unavailable. LLDB checks common `read` functions and source-mapped `svc`/`syscall` instructions.
+WhichKey labels the main groups directly: `b` means **Buffer**, `t` means **Tabs**, and `w` means **Window**. It shows each shortcut's action; disabling WhichKey does not remove the shortcuts. Plugin-specific mappings only appear when their plugin is enabled.
 
 ### Snippets
 
@@ -218,16 +110,14 @@ Type a trigger in Insert mode and press `<Tab>` to expand it, like VS Code. `<Ta
 ├── install.ps1
 ├── install.sh
 ├── lua/
-│   ├── asm_debug/
-│   │   └── init.lua
 │   ├── asm_indent.lua
 │   ├── autocmd/
 │   │   ├── autosave.lua
 │   │   ├── cursor.lua
+│   │   ├── external_changes.lua
 │   │   ├── status.lua
 │   │   └── tabline.lua
 │   ├── plugins/
-│   │   ├── asm-debug.lua
 │   │   ├── auto-session.lua
 │   │   ├── autopairs.lua
 │   │   ├── catppuccin.lua

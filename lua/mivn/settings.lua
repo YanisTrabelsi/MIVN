@@ -25,7 +25,7 @@ local defaults = {
 		telescope = true, oil = true, toggleterm = true, treesitter = true,
 		autopairs = true, conform = true, lint = true, lsp = true,
 		completion = true, luasnip = true, friendly_snippets = true,
-		asm_debug = true, auto_session = true,
+		auto_session = true,
 		undotree = true, hlchunk = true, render_markdown = true,
 	},
 	plugin_options = {},
@@ -92,7 +92,6 @@ local function normalize(raw)
 	local table_options = {
 		dashboard = { "setup" },
 		catppuccin = { "integrations", "styles", "color_overrides", "highlight_overrides" },
-		asm_debug = {},
 		render_markdown = {},
 		which_key = { "setup", "padding", "layout_width" },
 		telescope = { "setup", "defaults", "extensions", "path_display", "borderchars" },
@@ -186,10 +185,6 @@ function M.path()
 end
 
 function M.plugin_enabled(name)
-	-- The assembly debugger opens its executable picker with Telescope.
-	if name == "asm_debug" and not config.plugins.telescope then
-		return false
-	end
 	return config.plugins[name] ~= false
 end
 

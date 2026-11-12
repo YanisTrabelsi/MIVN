@@ -90,12 +90,6 @@ function M.apply()
 	set("DashboardTitleGlowSoft", { fg = mix(primary, "#FFFFFF", 0.08), bold = true })
 	set("DashboardTitleGlowCore", { fg = mix(primary, "#FFFFFF", 0.22), bold = true })
 	set("DashboardFooter", { fg = palette.muted, italic = true })
-	set("AsmDebugTitle", { fg = primary, bold = true })
-	set("AsmDebugAccent", { fg = secondary, bold = true })
-	set("AsmDebugCurrent", { fg = palette.background, bg = secondary, bold = true })
-	set("AsmDebugBorder", { fg = primary })
-	set("AsmDebugStatus", { fg = secondary, bold = true })
-	set("AsmDebugRegister", { fg = primary, bold = true })
 
 	vim.g.terminal_color_5 = primary
 	vim.g.terminal_color_13 = primary

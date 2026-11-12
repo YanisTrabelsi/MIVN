@@ -50,8 +50,6 @@ return {
 	},
 
 	-- Disable any plugin with false. Re-enable it with true, then restart Neovim.
-	-- The ASM debugger uses Telescope for its executable picker, so disabling
-	-- Telescope also disables the debugger until Telescope is enabled again.
 	plugins = {
 		catppuccin = true,
 		dashboard = true,
@@ -68,7 +66,6 @@ return {
 		completion = true,
 		luasnip = true,
 		friendly_snippets = true,
-		asm_debug = true,
 		auto_session = true,
 		undotree = true,
 		hlchunk = true,
@@ -79,10 +76,6 @@ return {
 	-- For advanced options, each plugin's `setup` table is merged into its native
 	-- setup call. Catppuccin and render-markdown use their native options directly.
 	plugin_options = {
-		asm_debug = {
-			follow_code = true, -- keep the current instruction in view after each pause
-			follow_memory = true, -- keep the stack dump centered around SP
-		},
 		dashboard = {
 			setup = {
 				hide = { statusline = false }, -- keep the status bar visible on the dashboard

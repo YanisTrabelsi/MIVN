@@ -7,9 +7,11 @@ return {
 	config = function()
 		local options = settings.plugin_options("which_key")
 		local spec = {
-			{ "<leader>o", group = "Open / settings" },
-			{ "<leader>w", group = "Windows" },
-			{ "<leader>q", group = "Quit" },
+			{ "<leader>o", group = "Open / Settings" },
+			{ "<leader>w", group = "Window: focus, move, resize, split" },
+			{ "<leader>b", group = "Buffer" },
+			{ "<leader>t", group = "Tabs" },
+			{ "<leader>q", group = "Quit Neovim" },
 		}
 
 		if settings.plugin_enabled("telescope") then
@@ -22,10 +24,6 @@ return {
 		if settings.plugin_enabled("auto_session") then
 			table.insert(spec, { "<leader>s", group = "Sessions" })
 		end
-		if settings.plugin_enabled("asm_debug") then
-			table.insert(spec, { "<leader>a", group = "Assembly debugger" })
-		end
-
 		local setup = {
 			delay = options.delay or 300,
 			preset = options.preset or "modern",
