@@ -21,6 +21,9 @@ return {
 			popupmenu = {
 				enabled = options.popupmenu ~= false,
 			},
+			lsp = {
+				progress = { enabled = false },
+			},
 			views = {
 				cmdline_popup = {
 					position = options.cmdline_position or { row = "95%", col = "50%" },
