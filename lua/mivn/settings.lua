@@ -19,6 +19,7 @@ local defaults = {
 		animation = { enabled = true, effect = "glow", period_ms = 9000, width = 3 },
 	},
 	autosave = { enabled = true, delay_ms = 200 },
+	key_history = { enabled = true, size = 16 },
 	languages = { assembly = true, c = true, cpp = true, python = true, bash = true, lua = true },
 	plugins = {
 		catppuccin = true, dashboard = true, which_key = true, noice = true,
@@ -143,6 +144,11 @@ local function normalize(raw)
 	result.dashboard.animation.period_ms = clamp_number(result.dashboard.animation.period_ms, 9000, 4000, 30000)
 	result.dashboard.animation.width = clamp_number(result.dashboard.animation.width, 3, 1, 8)
 	result.autosave.enabled = result.autosave.enabled ~= false
+	if type(result.key_history) ~= "table" then
+		result.key_history = vim.deepcopy(defaults.key_history)
+	end
+	result.key_history.enabled = result.key_history.enabled == true
+	result.key_history.size = clamp_number(result.key_history.size, 16, 1, 100)
 	result.dashboard.show_logo = result.dashboard.show_logo ~= false
 	result.autosave.delay_ms = clamp_number(result.autosave.delay_ms, 200, 50, 2000)
 	for key, fallback in pairs(defaults.languages) do

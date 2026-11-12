@@ -62,6 +62,8 @@ instruction_set = "arm64"
 - Open **Edit MIVN settings** from the dashboard, press `<leader>os`, or run `:MivnSettings`. It opens [lua/mivn/user_config.lua](lua/mivn/user_config.lua), a normal Lua file with editable values and comments. Save it to reload appearance, dashboard, auto-save, and LSP language enablement. Plugin on/off switches and setup options require restarting Neovim.
 - Each entry under `plugins` can be set to `false` to disable that plugin, or `true` to re-enable it. Related settings are grouped under `plugin_options` (Catppuccin, WhichKey, Telescope, Oil, ToggleTerm, Treesitter, completion, formatters, linters, LSP servers, sessions, Noice and more). Plugin options include common settings and an advanced `setup` table for the plugin's native configuration; LSP servers have their own options. Set `theme.transparent_floats` or `theme.transparent_background` to `false` only if you want opaque windows; both are transparent by default. Neovim's native notifications remain enabled by default.
 - Files changed outside Neovim are reloaded automatically when their buffers have no unsaved local edits. MIVN auto-saves edits outside Insert mode, so configuration files update without a write confirmation prompt.
+- The status bar shows the most recent typed keys, with the newest key at the right. Change `key_history.enabled` and `key_history.size` in `lua/mivn/user_config.lua` to disable the history or choose how many keys it keeps (1–100).
+- In a ToggleTerm window, press `<C-Space>` to leave terminal input mode and move through terminal output with normal-mode navigation keys. Press `i` to return to terminal input.
 
 ## Keybinds
 

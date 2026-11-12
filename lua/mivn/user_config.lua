@@ -39,6 +39,11 @@ return {
 		delay_ms = 200, -- 50 to 2000; saves after edits outside Insert mode
 	},
 
+	key_history = {
+		enabled = true,
+		size = 16, -- number of recent key presses shown in the status bar
+	},
+
 	-- LSPs are enabled individually here. A server still needs to be installed.
 	languages = {
 		assembly = true,

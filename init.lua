@@ -27,6 +27,7 @@ end
 
 -- Initialization
 require("mivn.keymaps").setup()
+require("mivn.key_history").setup()
 require("lazy").setup("plugins") -- Load all files under ./lua/plugins.
 
 vim.diagnostic.config({

@@ -5,6 +5,10 @@ return {
 	config = function()
 		local options = require("mivn.settings").plugin_options("toggleterm")
 		vim.opt.termguicolors = true
+		vim.keymap.set("t", "<C-Space>", [[<C-\><C-n>]], {
+			desc = "Leave terminal input and navigate its buffer",
+			silent = true,
+		})
 
 		local setup = {
 			open_mapping = options.open_mapping or [[<leader>ot]],
@@ -17,6 +21,10 @@ return {
 				winblend = options.winblend or 32,
 			},
 			on_open = function(term)
+				vim.wo[term.window].number = false
+				vim.wo[term.window].relativenumber = false
+				vim.wo[term.window].statuscolumn = ""
+				vim.wo[term.window].signcolumn = "no"
 				vim.api.nvim_set_option_value(
 					"winhighlight",
 					"FloatBorder:ToggleTermFloatBorder",

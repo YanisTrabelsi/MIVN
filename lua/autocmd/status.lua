@@ -9,10 +9,14 @@ local function restore_status(window, buffer)
 	if vim.api.nvim_win_get_buf(window) ~= buffer or vim.bo[buffer].filetype == "dashboard" then
 		return
 	end
+	local is_terminal = vim.bo[buffer].buftype == "terminal"
 
-	vim.wo[window].number = true
-	vim.wo[window].relativenumber = true
-	vim.wo[window].statuscolumn = statuscolumn
+	vim.wo[window].number = not is_terminal
+	vim.wo[window].relativenumber = not is_terminal
+	vim.wo[window].statuscolumn = is_terminal and "" or statuscolumn
+	if is_terminal then
+		vim.wo[window].signcolumn = "no"
+	end
 	vim.wo[window].statusline = statusline
 	vim.o.laststatus = 3
 end

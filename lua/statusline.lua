@@ -8,6 +8,7 @@ local modes = {
 	["\22"] = "VB",
 	["c"] = "C",
 	["R"] = "R",
+	["t"] = "T",
 }
 
 local mode_colors = {
@@ -17,6 +18,7 @@ local mode_colors = {
 	["V"] = "%#StatusVisual#",
 	["c"] = "%#StatusCommand#",
 	["R"] = "%#StatusReplace#",
+	["t"] = "%#StatusInsert#",
 }
 
 require("mivn.theme").apply()
@@ -38,12 +40,17 @@ M.render = function()
 
 	local mode_part  = " " .. mode_label .. " "
 	local file_part  = " " .. file_name:gsub("%%", "%%%%") .. modified .. " "
-	local right_part = " " .. line_str .. ":" .. col_str .. " "
+	local position_part = " " .. line_str .. ":" .. col_str .. " "
+	local fixed_width = vim.fn.strdisplaywidth(mode_part)
+		+ vim.fn.strdisplaywidth(" " .. file_name .. modified .. " ")
+		+ vim.fn.strdisplaywidth(position_part)
+	local history, history_width = require("mivn.key_history").render(math.max(vim.o.columns - fixed_width - 2, 0))
+	local right_part = position_part .. (history ~= "" and (" " .. history .. " ") or "")
 
 	local filler = vim.o.columns
-		- vim.fn.strdisplaywidth(mode_part)
-		- vim.fn.strdisplaywidth(" " .. file_name .. modified .. " ")
-		- vim.fn.strdisplaywidth(right_part)
+		- fixed_width
+		- history_width
+		- (history ~= "" and 2 or 0)
 
 	return mode_hl .. mode_part
 		.. "%#StatusLine#" .. file_part
