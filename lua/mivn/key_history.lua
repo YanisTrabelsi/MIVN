@@ -29,12 +29,12 @@ function M.setup()
 		return
 	end
 	namespace = vim.api.nvim_create_namespace("MivnKeyHistory")
-	vim.on_key(function(key, typed)
+	vim.on_key(function(_, typed)
 		local limit, enabled = key_limit()
-		if not enabled or typed ~= true or key == "" then
+		if not enabled or typed == "" then
 			return
 		end
-		keys[#keys + 1] = vim.fn.keytrans(key)
+		keys[#keys + 1] = vim.fn.keytrans(typed)
 		while #keys > limit do
 			table.remove(keys, 1)
 		end
