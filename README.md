@@ -37,7 +37,7 @@ Edit these roles under `theme.colors` in [lua/mivn/user_config.lua](lua/mivn/use
 - **nvim-treesitter** — Syntax highlighting and indentation
 - **nvim-autopairs** — Auto close brackets and quotes
 - **toggleterm.nvim** — Floating terminal (`<leader>ot`)
-- **undotree** — Visual undo history (`<leader>u`)
+- **undotree** — Visual undo history (`<leader>u`); `j`/`k` switch live between states
 - **conform.nvim** — Format Python with Ruff on save
 - **nvim-lint** — Lint Python with Flake8
 - **Auto-save** — Saves edits after a short delay outside Insert mode and on leaving Insert mode; formatters run only on save
@@ -59,11 +59,12 @@ instruction_set = "arm64"
 - **auto-session** — Automatic session save per directory, with manual restore
 
 ### Personalization
-- Open **Edit MIVN settings** from the dashboard, press `<leader>os`, or run `:MivnSettings`. It opens [lua/mivn/user_config.lua](lua/mivn/user_config.lua), a normal Lua file with editable values and comments. Save it to reload appearance, dashboard, auto-save, and LSP language enablement. Plugin on/off switches and setup options require restarting Neovim.
+- Open **Edit MIVN settings** from the dashboard, press `<leader>os`, or run `:MivnSettings`. It opens [lua/mivn/user_config.lua](lua/mivn/user_config.lua), a normal Lua file with editable values and comments explaining each plugin. Save it to reload appearance, dashboard, auto-save, key history, and LSP language enablement. Plugin on/off switches and plugin options require restarting Neovim. If the file has a Lua syntax error, MIVN keeps the last valid settings and reports the error.
 - Each entry under `plugins` can be set to `false` to disable that plugin, or `true` to re-enable it. Related settings are grouped under `plugin_options` (Catppuccin, WhichKey, Telescope, Oil, ToggleTerm, Treesitter, completion, formatters, linters, LSP servers, sessions, Noice and more). Plugin options include common settings and an advanced `setup` table for the plugin's native configuration; LSP servers have their own options. Set `theme.transparent_floats` or `theme.transparent_background` to `false` only if you want opaque windows; both are transparent by default. Neovim's native notifications remain enabled by default.
 - Files changed outside Neovim are reloaded automatically when their buffers have no unsaved local edits. MIVN auto-saves edits outside Insert mode, so configuration files update without a write confirmation prompt.
 - The status bar shows the most recent typed keys, with the newest key at the right. Change `key_history.enabled` and `key_history.size` in `lua/mivn/user_config.lua` to disable the history or choose how many keys it keeps (1–100).
 - In a ToggleTerm window, press `<C-Space>` to leave terminal input mode and move through terminal output with normal-mode navigation keys. Press `i` to return to terminal input.
+- In Undotree (`<leader>u`), `j`/`k` or the arrow keys move through history and immediately show that version in the buffer; `<Enter>` applies the selected version, and `q` closes the history. The diff panel stays visible while browsing. These switches only change the current buffer and remain undoable; save the file normally to write it to disk.
 
 ## Keybinds
 

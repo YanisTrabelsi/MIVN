@@ -1,6 +1,6 @@
--- MIVN's editable settings. Change the values here, save, and the appearance
--- and live options reload automatically. Plugin on/off switches take effect
--- after restarting Neovim. Keep strings in quotes and lists inside { }.
+-- MIVN's editable settings. Save this file to apply live settings immediately.
+-- Most plugin switches and options need a restart; theme, dashboard, and
+-- language enablement update live. Keep strings in quotes and lists in { }.
 return {
 	theme = {
 		flavour = "mocha", -- mocha, macchiato, frappe, latte
@@ -54,38 +54,39 @@ return {
 		lua = true,
 	},
 
-	-- Disable any plugin with false. Re-enable it with true, then restart Neovim.
+	-- Disable a plugin with false; restart Neovim after changing these switches.
 	plugins = {
-		catppuccin = true,
-		dashboard = true,
-		which_key = true,
-		noice = true,
-		telescope = true,
-		oil = true,
-		toggleterm = true,
-		treesitter = true,
-		autopairs = true,
-		conform = true,
-		lint = true,
-		lsp = true,
-		completion = true,
-		luasnip = true,
-		friendly_snippets = true,
-		auto_session = true,
-		undotree = true,
-		hlchunk = true,
-		render_markdown = true,
+		catppuccin = true, -- Colorscheme and palette.
+		dashboard = true, -- Startup screen and settings shortcut.
+		which_key = true, -- Shows leader-key shortcuts.
+		noice = true, -- Floating command line and completion menu.
+		telescope = true, -- Search files, text, buffers, and Git.
+		oil = true, -- Edit directories as file lists.
+		toggleterm = true, -- Floating terminal.
+		treesitter = true, -- Syntax highlighting and indentation.
+		autopairs = false, -- Closes brackets and quotes automatically.
+		conform = false, -- Formats Python with Ruff when saving.
+		lint = true, -- Reports Python issues with Flake8.
+		lsp = true, -- Language servers for completion, navigation, and diagnostics.
+		completion = true, -- Completion menu and snippet expansion.
+		luasnip = true, -- Snippet engine used by completion.
+		friendly_snippets = true, -- Community snippets for LuaSnip.
+		auto_session = true, -- Saves and restores editor sessions.
+		undotree = true, -- Browse and switch between edit history states.
+		hlchunk = true, -- Indent guides and code block highlights.
+		render_markdown = true, -- Renders Markdown headings, lists, and code.
 	},
 
-	-- Plugin options are kept together here so their settings are easy to find.
-	-- For advanced options, each plugin's `setup` table is merged into its native
-	-- setup call. Catppuccin and render-markdown use their native options directly.
+	-- Common settings for each plugin, grouped by the switch name above.
+	-- Advanced native settings go in that plugin's `setup` table.
 	plugin_options = {
+		-- Dashboard startup screen.
 		dashboard = {
 			setup = {
 				hide = { statusline = false }, -- keep the status bar visible on the dashboard
 			},
 		},
+		-- Catppuccin colorscheme.
 		catppuccin = {
 			term_colors = true,
 			integrations = { which_key = false },
@@ -95,6 +96,7 @@ return {
 				functions = { "italic", "bold" },
 			},
 		},
+		-- Leader-key shortcut popup.
 		which_key = {
 			border = "rounded", -- rounded, single, double, shadow, none
 			spacing = 3,
@@ -104,6 +106,7 @@ return {
 			delay = 300,
 			setup = {}, -- advanced WhichKey options
 		},
+		-- Search and picker windows.
 		telescope = {
 			sorting_strategy = "ascending",
 			layout_strategy = "horizontal", -- horizontal, vertical, flex, cursor, bottom_pane
@@ -121,6 +124,7 @@ return {
 			extensions = {},
 			setup = {}, -- advanced Telescope options
 		},
+		-- File explorer.
 		oil = {
 			show_hidden = true,
 			natural_order = true,
@@ -129,6 +133,7 @@ return {
 			float = { padding = 2, max_width = 90, max_height = 30, border = "rounded" },
 			setup = {}, -- advanced Oil options
 		},
+		-- Embedded terminal.
 		toggleterm = {
 			direction = "float", -- float, horizontal, vertical, tab
 			border = "rounded", -- rounded, single, double, shadow
@@ -138,12 +143,15 @@ return {
 			insert_mappings = false,
 			setup = {}, -- advanced ToggleTerm options
 		},
+		-- Syntax parsers and indentation.
 		treesitter = {
 			parsers = { "lua", "vim", "vimdoc", "bash", "python", "javascript", "typescript", "html", "css", "json", "markdown", "asm" },
 			indent = true,
 			setup = {}, -- advanced nvim-treesitter options
 		},
+		-- Automatic matching brackets and quotes.
 		autopairs = { check_treesitter = true, setup = {} },
+		-- Completion menu and snippet expansion.
 		completion = {
 			snippets = true,
 			friendly_snippets = true,
@@ -151,20 +159,23 @@ return {
 			snippet_priority = 2000, -- prefer MIVN snippets when triggers overlap
 			setup = {},
 		},
+		-- Formatters that run when a buffer is saved.
 		conform = {
 			format_on_save = true,
 			timeout_ms = 500,
 			lsp_format = "fallback", -- never, fallback, prefer, first, last
 			formatters_by_ft = { python = { "ruff_format" } },
-			setup = {}, -- advanced conform.nvim options
+			setup = {},     -- advanced conform.nvim options
 		},
+		-- Linters and the events that trigger them.
 		lint = {
 			linters_by_ft = { python = { "flake8" } },
 			events = { "BufEnter", "BufWritePost" },
 		},
+		-- Language servers, Mason installs, and per-server settings.
 		lsp = {
 			ensure_installed = true,
-			mason = {}, -- Mason's native setup options
+			mason = {},  -- Mason's native setup options
 			mason_lspconfig = {}, -- mason-lspconfig's native setup options
 			capabilities = {},
 			servers = {
@@ -174,12 +185,14 @@ return {
 				-- pyright = { enabled = false },
 			},
 		},
+		-- Session save and restore behavior.
 		auto_session = {
 			auto_save = true,
 			auto_restore = false,
 			suppressed_dirs = { "~/", "~/Projects", "~/Downloads", "/" },
 			setup = {}, -- advanced auto-session options
 		},
+		-- Indent guides and code block highlights.
 		hlchunk = {
 			chunk = true,
 			indent = true,
@@ -189,6 +202,7 @@ return {
 			indent_colors = { "#313244", "#3B3A52", "#45455A" },
 			setup = {}, -- advanced hlchunk options
 		},
+		-- Command line and completion menu appearance.
 		noice = {
 			cmdline = true,
 			popupmenu = true,
@@ -201,6 +215,7 @@ return {
 			border = "rounded",
 			setup = {}, -- advanced Noice options
 		},
-		render_markdown = {}, -- render-markdown.nvim's native options
+		-- Markdown rendering options (native render-markdown settings).
+		render_markdown = {},
 	},
 }

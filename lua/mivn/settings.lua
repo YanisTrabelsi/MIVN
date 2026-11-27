@@ -269,7 +269,16 @@ local function apply_runtime(previous)
 	pcall(vim.api.nvim_exec_autocmds, "User", { pattern = "MivnSettingsReloaded" })
 
 	local changed = {}
-	local restart_required = previous and not vim.deep_equal(previous.plugin_options, config.plugin_options)
+	local previous_plugin_options = previous and vim.deepcopy(previous.plugin_options)
+	local current_plugin_options = vim.deepcopy(config.plugin_options)
+	if previous_plugin_options then
+		-- These options are reapplied by apply_runtime() without restarting.
+		previous_plugin_options.dashboard = nil
+		previous_plugin_options.catppuccin = nil
+		current_plugin_options.dashboard = nil
+		current_plugin_options.catppuccin = nil
+	end
+	local restart_required = previous and not vim.deep_equal(previous_plugin_options, current_plugin_options)
 	if previous then
 		for name, enabled in pairs(config.plugins) do
 			if previous.plugins[name] ~= enabled then
@@ -281,7 +290,7 @@ local function apply_runtime(previous)
 		table.sort(changed)
 		vim.notify("Plugin switches saved (restart Neovim to apply): " .. table.concat(changed, ", "), vim.log.levels.INFO)
 	elseif restart_required then
-		vim.notify("Plugin options reloaded. Restart Neovim to apply all plugin changes.", vim.log.levels.INFO)
+		vim.notify("Plugin options saved. Restart Neovim to apply the remaining plugin setup changes.", vim.log.levels.INFO)
 	else
 		vim.notify("MIVN settings reloaded.", vim.log.levels.INFO)
 	end
