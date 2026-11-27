@@ -25,7 +25,7 @@ return {
 		language = "en", -- en, fr
 		layout = "centered", -- centered, compact, top
 		show_logo = true,
-		title = "MIVN your editor",
+		title = "MIVN Is Very Nice",
 		animation = {
 			enabled = true,
 			effect = "glow", -- glow, off
