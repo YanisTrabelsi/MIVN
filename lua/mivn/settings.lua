@@ -20,7 +20,7 @@ local defaults = {
 	},
 	autosave = { enabled = true, delay_ms = 200 },
 	key_history = { enabled = true, size = 16 },
-	navigation = { disable_arrow_keys = true, disable_numpad_numbers = true },
+	navigation = { disable_arrow_keys = true },
 	languages = { assembly = true, c = true, cpp = true, python = true, bash = true, lua = true },
 	plugins = {
 		catppuccin = true, dashboard = true, which_key = true, noice = true,
@@ -154,7 +154,6 @@ local function normalize(raw)
 		result.navigation = vim.deepcopy(defaults.navigation)
 	end
 	result.navigation.disable_arrow_keys = result.navigation.disable_arrow_keys ~= false
-	result.navigation.disable_numpad_numbers = result.navigation.disable_numpad_numbers ~= false
 	result.dashboard.show_logo = result.dashboard.show_logo ~= false
 	result.autosave.delay_ms = clamp_number(result.autosave.delay_ms, 200, 50, 2000)
 	for key, fallback in pairs(defaults.languages) do

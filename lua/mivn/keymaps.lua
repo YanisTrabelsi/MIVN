@@ -1,10 +1,8 @@
 local M = {}
 
 local arrow_keys = { "<Up>", "<Down>", "<Left>", "<Right>" }
-local numpad_numbers = { "<k0>", "<k1>", "<k2>", "<k3>", "<k4>", "<k5>", "<k6>", "<k7>", "<k8>", "<k9>" }
 local arrow_modes = { "n", "x", "s", "o" }
 local arrow_map_description = "MIVN: use HJKL for navigation"
-local numpad_map_description = "MIVN: use the main number row"
 
 local function apply_key_group(keys, description, disabled)
 	for _, mode in ipairs(arrow_modes) do
@@ -22,7 +20,6 @@ end
 function M.apply_navigation_settings()
 	local navigation = require("mivn.settings").get().navigation
 	apply_key_group(arrow_keys, arrow_map_description, navigation.disable_arrow_keys)
-	apply_key_group(numpad_numbers, numpad_map_description, navigation.disable_numpad_numbers)
 end
 
 function M.setup()
