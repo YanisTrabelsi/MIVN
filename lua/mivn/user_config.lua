@@ -44,6 +44,12 @@ return {
 		size = 16, -- number of recent key presses shown in the status bar
 	},
 
+	-- Use HJKL instead of the arrow keys for editor navigation.
+	navigation = {
+		disable_arrow_keys = true,
+		disable_numpad_numbers = true, -- keypad digits only when the terminal distinguishes them
+	},
+
 	-- LSPs are enabled individually here. A server still needs to be installed.
 	languages = {
 		assembly = true,
